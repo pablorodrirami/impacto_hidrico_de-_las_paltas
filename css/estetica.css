@@ -1,0 +1,38 @@
+/* css/estilos.css */
+/* css/estilos.css */
+
+:root {
+  /* Textos y tipografía */
+  --color-titulos: #4dc2d7;  /* Celeste brillante para destacar */
+  --color-sub: #1f7a8c;      /* Azul verdoso para subtítulos */
+  --color-letras: #eef3f1;   /* Blanco humo para lectura cómoda */
+
+  /* Estructura y fondos */
+  --color-fondo: #0e1513;    /* Verde muy oscuro casi negro */
+  --color-cuadros: #152220;  /* Verde oscuro para tarjetas o contenedores */
+
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Reglas generales para que tu HTML adopte el estilo inmediatamente */
+body {
+  margin: 0;
+  background-color: var(--color-fondo);
+  color: var(--color-letras);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+h1 {
+  color: var(--color-titulos);
+}
+
+h2, h3 {
+  color: var(--color-sub);
+}
+
+/* Clase opcional si en tu calculadora usas contenedores tipo tarjeta */
+.contenedor-tarjeta {
+  background-color: var(--color-cuadros);
+  border-radius: 12px;
+  padding: 20px;
+}
