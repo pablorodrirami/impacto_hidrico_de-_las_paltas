@@ -1,0 +1,66 @@
+[
+    {
+        "region":"Antofagasta",
+        "cantidad":7523
+    },
+    {
+        "region":"Arica y Parinacota",
+        "cantidad":3989
+    },
+    {
+        "region":"Atacama",
+        "cantidad":10192
+    },
+    {
+        "region":"Aysén del General Carlos Ibáñez del Campo",
+        "cantidad":61
+    },
+    {
+        "region":"Biobío",
+        "cantidad":7432
+    },
+    {
+        "region":"Coquimbo",
+        "cantidad":16817
+    },
+    {
+        "region":"La Araucanía",
+        "cantidad":16817
+    },
+    {
+        "region":"Libertador General Bernardo O'Higgins",
+        "cantidad":4272
+    },
+    {
+        "region":"Los Lagos",
+        "cantidad":4159
+    },
+    {
+        "region":"Los Ríos",
+        "cantidad":1909
+    },
+    {
+        "region":"Magallanes y de la Antártica Chilena",
+        "cantidad":1169
+    },
+    {
+        "region":"Maule",
+        "cantidad":5731
+    },
+    {
+        "region":"Metropolitana de Santiago",
+        "cantidad":10155
+    },
+    {
+        "region":"Tarapacá",
+        "cantidad":11306
+    },
+    {
+        "region":"Valparaíso",
+        "cantidad":24560
+    },
+    {
+        "region":"Ñuble",
+        "cantidad":5049
+    }
+]

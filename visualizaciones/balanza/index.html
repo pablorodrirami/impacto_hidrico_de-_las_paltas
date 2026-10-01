@@ -98,36 +98,41 @@
       <div>
         <label for="ha">Hectáreas de palto</label>
         <input type="number" id="ha" value="25063" min="0" step="100">
-        <div class="hint">Catastro frutícola 2025 (CIREN/ODEPA): ~25.063 ha a nivel nacional. Ajusta si quieres una región o comuna.</div>
+        <div class="hint">Catastro frutícola 2025 ODEPA estima ~25.063 ha. a nivel nacional.</div>
       </div>
       <div>
         <label for="rendimiento">Rendimiento (kg de palta / ha / año)</label>
         <input type="number" id="rendimiento" value="10100" min="0" step="50">
-        <div class="hint">Tu estimación (10.100 kg/ha) coincide con la cifra publicada para Chile (~10.129 kg/ha). El rango habitual es 7.000-11.000 según clima y manejo.</div>
+        <div class="hint"> Catastro frutícola 2025 ODEPA estima ~10.100 kg/ha. El rango habitual es 7.000-11.000 según clima y manejo.</div>
       </div>
       <div>
         <label for="huella">Huella hídrica de la palta (L/kg)</label>
-        <input type="number" id="huella" value="1981" min="0" step="1">
-        <div class="hint">Promedio mundial, Mekonnen &amp; Hoekstra (2010). Editable si tienes un valor más preciso para Chile.</div>
+        <input type="number" id="huella" value="900" min="0" step="1">
+        <div class="hint">Promedio muy variable segun estudios. 900 L/kg es una estimacion para todo chile</div>
       </div>
       <div>
-        <!-- 🛠️ MARCADOR: AQUÍ PUEDES AÑADIR O QUITAR REGIONES DEL MENÚ DESPLEGABLE -->
-        <label for="personas">Personas dependientes de camión aljibe</label>
-        <input type="number" id="personas" value="367195" min="0" step="10">
-        <select id="preset" style="margin-top:.4rem;">
-          <option value="367195" selected>Nacional (viviendas × 2,8)</option>
-          <option value="68768">Región de Valparaíso</option>
-          <option value="47088">Región de Coquimbo</option>
-          <option value="11962">Región de O'Higgins</option>
-          <option value="28434">Región Metropolitana</option>
+        <!-- 🛠️ MARCADOR: LAS OPCIONES SE CARGAN SOLAS DESDE datos_camion_aljibe.json -->
+        <label for="viviendas">Viviendas dependientes de camiones aljibe</label>
+        <select id="viviendas" aria-label="Viviendas dependientes de camiones aljibe"></select>
+        <div class="hint">Informacion extraida del censo 2024.<span id="estado-datos">Cargando datos…</span></div>
+      </div>
+      <div>
+        <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LAS OPCIONES DE PERSONAS POR VIVIENDA (la base es 2,8) -->
+        <label for="pph">Personas por vivienda</label>
+        <select id="pph">
+          <option value="2">2,0</option>
+          <option value="2.5">2,5</option>
+          <option value="2.8" selected>2,8 (base)</option>
+          <option value="3">3,0</option>
+          <option value="3.5">3,5</option>
+          <option value="4">4,0</option>
         </select>
-        <div class="hint">Valores basados en viviendas multiplicadas por 2,8 personas/hogar (Censo 2024, INE).</div>
+        <div class="hint">Promedio nacional segun censo.</div>
       </div>
       <div>
-        <!-- 🛠️ MARCADOR: CAMPO DE RACIÓN DIARIA FIJADO EN 100L Y BLOQUEADO -->
         <label for="consumo">Ración diaria (L/persona/día)</label>
-        <input type="number" id="consumo" value="100" readonly style="background-color: rgba(128,128,128,0.1); cursor: not-allowed;">
-        <div class="hint">Valor fijado a 100 litros (no modificable).</div>
+        <input type="number" id="consumo" value="100" min="1" step="1">
+        <div class="hint">La contraloria chilena establecio 100 Litros diarios por persona.</div>
       </div>
     </div>
   </div>
@@ -166,18 +171,12 @@
     <p class="sub" id="resultado-secundario"></p>
   </div>
 
-  <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LAS FUENTES Y CITAS AL PIE DE PÁGINA -->
-  <p class="fuentes">
-    Huella hídrica promedio mundial de la palta: Mekonnen &amp; Hoekstra (2010), <i>The green, blue and grey water footprint of crops and derived crop products</i>. Hectáreas: catastro frutícola CIREN/ODEPA (últimos años con catastro completo). Rendimiento: comparación internacional de rendimientos de palto por país. Personas dependientes de camión aljibe: tu dataset censal (valores de referencia calculados sobre las categorías de fuente de agua). Todos los valores son editables — ajústalos con tus propias cifras de comuna o región.
-  </p>
-</div>
-
 <script>
   const haInput = document.getElementById('ha');
   const rendInput = document.getElementById('rendimiento');
   const huellaInput = document.getElementById('huella');
-  const personasInput = document.getElementById('personas');
-  const presetSelect = document.getElementById('preset');
+  const viviendasSelect = document.getElementById('viviendas');
+  const pphSelect = document.getElementById('pph');
   const consumoInput = document.getElementById('consumo');
   const beam = document.getElementById('beam');
   const lblKg = document.getElementById('lbl-kg');
@@ -194,17 +193,83 @@
     return new Intl.NumberFormat('es-CL', {notation:'compact', maximumFractionDigits:1}).format(n);
   }
 
-  presetSelect.addEventListener('change', () => {
-    personasInput.value = presetSelect.value;
+  // 🛠️ MARCADOR: DATOS DE CAMIÓN ALJIBE. Se leen de datos_camion_aljibe.json ({"Región": viviendas, ...}).
+  // Si el archivo no se puede leer (p. ej. al abrir el HTML con doble clic) se usan estos valores de respaldo.
+  const DATOS_RESPALDO = {
+    "Antofagasta": 7523,
+    "Arica y Parinacota": 3989,
+    "Atacama": 10192,
+    "Aysén del General Carlos Ibáñez del Campo": 61,
+    "Biobío": 7432,
+    "Coquimbo": 16817,
+    "La Araucanía": 16817,
+    "Libertador General Bernardo O'Higgins": 4272,
+    "Los Lagos": 4159,
+    "Los Ríos": 1909,
+    "Magallanes y de la Antártica Chilena": 1169,
+    "Maule": 5731,
+    "Metropolitana de Santiago": 10155,
+    "Tarapacá": 11306,
+    "Valparaíso": 24560,
+    "Ñuble": 5049
+  };
+  const estadoDatos = document.getElementById('estado-datos');
+
+  // Acepta [{"region": "...", "cantidad": n}, ...] o un diccionario {"región": n, ...}
+  function normalizar(json){
+    const out = {};
+    const pares = Array.isArray(json)
+      ? json.map(it => [it && it.region, it && it.cantidad])
+      : Object.entries(json || {});
+    pares.forEach(([nombre, valor]) => {
+      const n = Number(valor);
+      if (typeof nombre === 'string' && Number.isFinite(n) && n >= 0) out[nombre] = n;
+    });
+    return out;
+  }
+
+  function poblarSelect(datos){
+    const entradas = Object.entries(datos);
+    // Opción "Nacional" = suma de todas las regiones (si el JSON no trae una propia)
+    if (!entradas.some(([k]) => k.trim().toLowerCase() === 'nacional')){
+      const suma = entradas.reduce((acc, [, v]) => acc + v, 0);
+      entradas.unshift(['Nacional (suma de regiones)', suma]);
+    }
+    viviendasSelect.textContent = '';
+    entradas.forEach(([nombre, valor]) => {
+      const op = document.createElement('option');
+      op.value = valor;
+      op.textContent = nombre + ' — ' + fmt(valor);
+      viviendasSelect.appendChild(op);
+    });
+    viviendasSelect.selectedIndex = 0;
     calcular();
-  });
+  }
+
+  async function cargarDatosAljibe(){
+    let datos = DATOS_RESPALDO;
+    let msg = 'Usando valores de respaldo (no se pudo leer datos_camion_aljibe.json).';
+    try{
+      const r = await fetch('datos_camion_aljibe.json', {cache: 'no-cache'});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const limpio = normalizar(await r.json());
+      if (Object.keys(limpio).length){
+        datos = limpio;
+        msg = 'Datos cargados desde datos_camion_aljibe.json.';
+      }
+    }catch(e){ /* se mantienen los valores de respaldo */ }
+    estadoDatos.textContent = msg;
+    poblarSelect(datos);
+  }
 
   // 🛠️ MARCADOR: AQUÍ PUEDES MODIFICAR LA LÓGICA DE LAS MATEMÁTICAS Y EL COMPORTAMIENTO DE LA BALANZA
   function calcular(){
     const ha = Math.max(0, parseFloat(haInput.value) || 0);
     const rendimiento = Math.max(0, parseFloat(rendInput.value) || 0);
     const huella = Math.max(0, parseFloat(huellaInput.value) || 0);
-    const personas = Math.max(0, parseFloat(personasInput.value) || 0);
+    const viviendas = Math.max(0, parseFloat(viviendasSelect.value) || 0);
+    const pph = Math.max(0, parseFloat(pphSelect.value) || 0);
+    const personas = viviendas * pph;
     const consumo = Math.max(1, parseFloat(consumoInput.value) || 1);
 
     const kgProducidos = ha * rendimiento;
@@ -224,7 +289,7 @@
 
     // 🛠️ MARCADOR: AQUÍ PUEDES EDITAR LOS TEXTOS DEL PÁRRAFO DE RESULTADOS
     if (ratio >= 1){
-      resPrincipal.innerHTML = "Esa producción de palto carga tanta agua como <b>" + fmtCompacto(ratio) + " días</b> de ración mínima para las " + fmt(personas) + " personas que dependen de camión aljibe.";
+      resPrincipal.innerHTML = "Esa producción de palto carga tanta agua como <b>" + fmt(ratio) + " días</b> de ración mínima para las " + fmt(personas) + " personas que dependen de camión aljibe.";
       resSecundario.textContent = "Eso equivale a cerca de " + fmtCompacto(ratio/365) + " años de esa ración diaria.";
     } else {
       const porcentaje = ratio * 100;
@@ -233,8 +298,10 @@
     }
   }
 
-  [haInput, rendInput, huellaInput, personasInput, consumoInput].forEach(el => el.addEventListener('input', calcular));
+  [haInput, rendInput, huellaInput, consumoInput].forEach(el => el.addEventListener('input', calcular));
+  [viviendasSelect, pphSelect].forEach(el => el.addEventListener('change', calcular));
   calcular();
+  cargarDatosAljibe();
 </script>
 </body>
 </html>
