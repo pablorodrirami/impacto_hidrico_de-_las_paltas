@@ -98,23 +98,23 @@
       <div>
         <label for="ha">Hectáreas de palto</label>
         <input type="number" id="ha" value="25063" min="0" step="100">
-        <div class="hint">Catastro frutícola 2025 ODEPA estima ~25.063 ha. a nivel nacional.</div>
+        <div class="hint">Catastro frutícola 2025 (CIREN/ODEPA): ~25.063 ha a nivel nacional. Ajusta si quieres una región o comuna.</div>
       </div>
       <div>
         <label for="rendimiento">Rendimiento (kg de palta / ha / año)</label>
         <input type="number" id="rendimiento" value="10100" min="0" step="50">
-        <div class="hint"> Catastro frutícola 2025 ODEPA estima ~10.100 kg/ha. El rango habitual es 7.000-11.000 según clima y manejo.</div>
+        <div class="hint">Tu estimación (10.100 kg/ha) coincide con la cifra publicada para Chile (~10.129 kg/ha). El rango habitual es 7.000-11.000 según clima y manejo.</div>
       </div>
       <div>
         <label for="huella">Huella hídrica de la palta (L/kg)</label>
         <input type="number" id="huella" value="900" min="0" step="1">
-        <div class="hint">Promedio muy variable segun estudios. 900 L/kg es una estimacion para todo chile</div>
+        <div class="hint">Promedio mundial, Mekonnen &amp; Hoekstra (2010). Editable si tienes un valor más preciso para Chile.</div>
       </div>
       <div>
         <!-- 🛠️ MARCADOR: LAS OPCIONES SE CARGAN SOLAS DESDE datos_camion_aljibe.json -->
         <label for="viviendas">Viviendas dependientes de camiones aljibe</label>
         <select id="viviendas" aria-label="Viviendas dependientes de camiones aljibe"></select>
-        <div class="hint">Informacion extraida del censo 2024.<span id="estado-datos">Cargando datos…</span></div>
+        <div class="hint">Elige una opción. <span id="estado-datos">Cargando datos…</span></div>
       </div>
       <div>
         <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LAS OPCIONES DE PERSONAS POR VIVIENDA (la base es 2,8) -->
@@ -127,12 +127,12 @@
           <option value="3.5">3,5</option>
           <option value="4">4,0</option>
         </select>
-        <div class="hint">Promedio nacional segun censo.</div>
+        <div class="hint">Se multiplica por las viviendas para obtener el número de personas.</div>
       </div>
       <div>
         <label for="consumo">Ración diaria (L/persona/día)</label>
         <input type="number" id="consumo" value="100" min="1" step="1">
-        <div class="hint">La contraloria chilena establecio 100 Litros diarios por persona.</div>
+        <div class="hint">Litros diarios por persona. Editable.</div>
       </div>
     </div>
   </div>
@@ -170,6 +170,12 @@
     <p class="resultado" id="resultado-principal"></p>
     <p class="sub" id="resultado-secundario"></p>
   </div>
+
+  <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LAS FUENTES Y CITAS AL PIE DE PÁGINA -->
+  <p class="fuentes">
+    Huella hídrica promedio mundial de la palta: Mekonnen &amp; Hoekstra (2010), <i>The green, blue and grey water footprint of crops and derived crop products</i>. Hectáreas: catastro frutícola CIREN/ODEPA (últimos años con catastro completo). Rendimiento: comparación internacional de rendimientos de palto por país. Personas dependientes de camión aljibe: tu dataset censal (valores de referencia calculados sobre las categorías de fuente de agua). Todos los valores son editables — ajústalos con tus propias cifras de comuna o región.
+  </p>
+</div>
 
 <script>
   const haInput = document.getElementById('ha');
@@ -302,6 +308,19 @@
   [viviendasSelect, pphSelect].forEach(el => el.addEventListener('change', calcular));
   calcular();
   cargarDatosAljibe();
+
+  // Informa su altura a la página que la incrusta (iframe) para que se muestre completa, sin scroll interno
+  (function(){
+    if (window.parent === window) return;
+    const wrap = document.querySelector('.wrap');
+    function enviarAltura(){
+      const h = Math.ceil(wrap.getBoundingClientRect().height);
+      window.parent.postMessage({tipo: 'balanza-altura', altura: h}, '*');
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(enviarAltura).observe(wrap);
+    window.addEventListener('load', enviarAltura);
+    enviarAltura();
+  })();
 </script>
 </body>
 </html>

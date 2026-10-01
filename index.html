@@ -38,6 +38,9 @@
     box-shadow:0 1px 3px rgba(0,0,0,.12);
   }
 
+  /* La balanza se ajusta a su contenido (la altura la informa la propia balanza) */
+  iframe.frame-auto{height:900px; display:block;}
+
   .placeholder{
     height:280px; border-radius:14px; border:2px dashed rgba(0,0,0,.2);
     display:flex; align-items:center; justify-content:center;
@@ -56,7 +59,7 @@
 <section class="viz">
   <h2>Balanza hídrica: producción de palto vs. camiones aljibe</h2>
   <p class="desc">Compara el agua embebida en la producción de palto con la ración mínima diaria de agua para las personas que dependen de camión aljibe.</p>
-  <iframe src="visualizaciones/balanza/index.html" title="Balanza hídrica"></iframe>
+  <iframe id="frame-balanza" class="frame-auto" src="visualizaciones/balanza/index.html" title="Balanza hídrica" scrolling="no"></iframe>
 </section>
 
 <section class="viz">
@@ -68,5 +71,15 @@
     </div>
 </section>
 
+<script>
+  // Ajusta el alto del iframe de la balanza a su contenido, para que se vea completa sin scroll interno
+  window.addEventListener('message', (e) => {
+    const f = document.getElementById('frame-balanza');
+    if (!f || e.source !== f.contentWindow) return;
+    if (!e.data || e.data.tipo !== 'balanza-altura') return;
+    const h = Number(e.data.altura);
+    if (Number.isFinite(h) && h > 0) f.style.height = Math.ceil(h) + 'px';
+  });
+</script>
 </body>
 </html>
