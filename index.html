@@ -1,62 +1,71 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Impacto Hídrico de las Paltas</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #2b7a0b; /* Un tono verde palta oscuro */
-        }
-        p.descripcion {
-            text-align: center;
-            font-size: 1.1em;
-            margin-bottom: 40px;
-        }
-        .contenedor-grafico {
-            background-color: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .contenedor-grafico h2 {
-            color: #555;
-            margin-top: 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Huella hídrica de la palta en Chile — Presentación</title>
+<style>
+  :root{
+    --agua-1:#0d3b4a; --agua-2:#1f7a8c; --bg:#eef3f1; --ink:#0d1f1c;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#0e1513; --ink:#eef3f1; } }
+  :root[data-theme="dark"]{ --bg:#0e1513; --ink:#eef3f1; }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,sans-serif;}
+
+  .intro{
+    min-height:70vh; display:flex; flex-direction:column; justify-content:center;
+    padding:3rem 1.4rem; max-width:760px; margin:0 auto; text-align:left;
+  }
+  .intro h1{font-size:clamp(1.8rem,5vw,2.8rem); color:var(--agua-1); margin:0 0 1rem; line-height:1.15;}
+  @media (prefers-color-scheme: dark){ .intro h1{color:var(--agua-2);} }
+  :root[data-theme="dark"] .intro h1{color:var(--agua-2);}
+  .intro p{font-size:1.05rem; line-height:1.6; opacity:.85; max-width:60ch;}
+  .scroll-hint{margin-top:2rem; font-size:.85rem; opacity:.55;}
+
+  section.viz{
+    padding:2.4rem 1.4rem 3rem; max-width:1000px; margin:0 auto;
+    border-top:1px solid rgba(0,0,0,.08);
+  }
+  section.viz h2{font-size:1.4rem; color:var(--agua-1); margin:0 0 .3rem;}
+  @media (prefers-color-scheme: dark){ section.viz h2{color:var(--agua-2);} }
+  :root[data-theme="dark"] section.viz h2{color:var(--agua-2);}
+  section.viz p.desc{opacity:.75; margin:0 0 1.2rem; max-width:65ch; line-height:1.5;}
+
+  iframe{
+    width:100%; height:min(85vh,720px); border:none; border-radius:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+  }
+
+  .placeholder{
+    height:280px; border-radius:14px; border:2px dashed rgba(0,0,0,.2);
+    display:flex; align-items:center; justify-content:center;
+    opacity:.5; font-size:.95rem;
+  }
+</style>
 </head>
 <body>
 
-    <h1>Impacto Hídrico: Paltas vs. Consumo Humano</h1>
-    <p class="descripcion">Visualización de datos sobre el gasto de agua en plantaciones de palta comparado con el consumo de la población.</p>
+<div class="intro">
+  <h1>Huella hídrica de la palta en Chile</h1>
+  <p>Producción, exportación y escasez hídrica decretada. Una mirada sobre cuánta agua carga esta agroindustria de exportación frente a las comunidades que dependen de camión aljibe.</p>
+  <p class="scroll-hint">↓ Scrollea para ver cada visualización</p>
+</div>
 
-    <!-- Aquí irá el primer gráfico -->
-    <div class="contenedor-grafico" id="grafico-consumo">
-        <h2>Consumo de Agua</h2>
-        <p><i>(Espacio reservado para el gráfico de consumo en litros)</i></p>
-    </div>
+<section class="viz">
+  <h2>Balanza hídrica: producción de palto vs. camiones aljibe</h2>
+  <p class="desc">Compara el agua embebida en la producción de palto con la ración mínima diaria de agua para las personas que dependen de camión aljibe.</p>
+  <iframe src="visualizaciones/balanza/index.html" title="Balanza hídrica"></iframe>
+</section>
 
-    <!-- Aquí irá el segundo gráfico -->
-    <div class="contenedor-grafico" id="grafico-exportaciones">
-        <h2>Exportaciones y Decretos de Escasez Hídrica</h2>
-        <p><i>(Espacio reservado para el gráfico del catastro)</i></p>
-    </div>
+<!-- Próxima visualización: copia el bloque <section class="viz"> de arriba,
+     cambia el título, la descripción y el src del iframe. -->
+<section class="viz">
+  <h2>Próxima visualización</h2>
+  <p class="desc">Reemplaza este bloque cuando tengas la siguiente visualización lista.</p>
+  <div class="placeholder">visualizaciones/nombre-de-la-viz/index.html</div>
+</section>
 
 </body>
 </html>
