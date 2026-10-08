@@ -49,31 +49,7 @@
     box-shadow:0 1px 2px rgba(0,0,0,.06);
     margin-bottom:1.4rem;
   }
-  .controls{display:grid; grid-template-columns:1fr 1fr; gap:1rem 1.2rem;}
-  @media (max-width:520px){ .controls{grid-template-columns:1fr;} }
-  label{display:block; font-size:.8rem; font-weight:600; margin-bottom:.35rem; opacity:.75;}
-  input, select{
-    width:100%; padding:.55rem .6rem; border-radius:10px;
-    border:1px solid rgba(0,0,0,.15); font-size:1rem; font-family:inherit;
-    background:transparent; color:inherit;
-  }
-  input:focus, select:focus{outline:2px solid var(--agua-2); outline-offset:1px;}
-  .hint{font-size:.72rem; opacity:.6; margin-top:.3rem; line-height:1.3;}
-
-  .stage{display:flex; justify-content:center; margin:.4rem 0 .2rem;}
-  .stage svg{width:100%; max-width:560px; height:auto;}
-  .pan-label{font-size:15px; font-weight:700; fill:var(--ink);}
-  .pan-value{font-size:14px; font-weight:600; fill:var(--ink); opacity:1;}
-
-  .resultado{
-    text-align:center; font-family:'Fraunces',serif; font-weight:600;
-    font-size:clamp(1.15rem,3vw,1.5rem); line-height:1.35; margin:.6rem 0 .2rem;
-  }
-  .resultado b{color:var(--acento);}
-  .sub{text-align:center; font-size:.85rem; opacity:.65; margin-bottom:0;}
-
-  .fuentes{font-size:.72rem; opacity:.55; line-height:1.5; margin:1.6rem 0 0;}
-  .fuentes a{color:inherit;}
+  .balanza{width:100%; border:0; display:block; min-height:560px;}
 
   section.mapa{margin-top:2.4rem; padding-top:2rem; border-top:1px solid rgba(0,0,0,.08);}
   section.mapa p.desc{opacity:.75; margin:0 0 1.2rem; max-width:65ch; line-height:1.5;}
@@ -83,93 +59,11 @@
 </head>
 <body>
 <div class="wrap">
-  <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR EL TÍTULO Y LA INTRODUCCIÓN -->
   <h1>¿Cuánta agua se exporta en forma de palta desde comunas que hoy están en escasez hídrica decretada?</h1>
-  <p class="lead">Calcula el agua que exige la producción de palto (hectáreas × rendimiento × huella hídrica) y compárala con la ración mínima diaria de agua para las personas que dependen de camión aljibe. La balanza se inclina hacia el lado que realmente pesa más.</p>
+  <p class="lead">Compara el agua que exige un año de producción de palta con la ración mínima de agua de las personas que dependen de camión aljibe.</p>
 
-  <div class="panel">
-    <div class="controls">
-      <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LOS VALORES POR DEFECTO Y LOS TEXTOS DE AYUDA (HINTS) -->
-      <div>
-        <label for="ha">Hectáreas de palto</label>
-        <input type="number" id="ha" value="25063" min="0" step="100">
-        <div class="hint">Catastro frutícola 2025 (CIREN/ODEPA): ~25.063 ha a nivel nacional. Ajusta si quieres una región o comuna.</div>
-      </div>
-      <div>
-        <label for="rendimiento">Rendimiento (kg de palta / ha / año)</label>
-        <input type="number" id="rendimiento" value="10100" min="0" step="50">
-        <div class="hint">Tu estimación (10.100 kg/ha) coincide con la cifra publicada para Chile (~10.129 kg/ha). El rango habitual es 7.000-11.000 según clima y manejo.</div>
-      </div>
-      <div>
-        <label for="huella">Huella hídrica de la palta (L/kg)</label>
-        <input type="number" id="huella" value="900" min="0" step="1">
-        <div class="hint">Promedio mundial, Mekonnen &amp; Hoekstra (2010). Editable si tienes un valor más preciso para Chile.</div>
-      </div>
-      <div>
-        <!-- 🛠️ MARCADOR: LAS OPCIONES SE CARGAN SOLAS DESDE datos_camion_aljibe.json -->
-        <label for="viviendas">Viviendas dependientes de camiones aljibe</label>
-        <select id="viviendas" aria-label="Viviendas dependientes de camiones aljibe"></select>
-        <div class="hint">Elige una opción. <span id="estado-datos">Cargando datos…</span></div>
-      </div>
-      <div>
-        <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LAS OPCIONES DE PERSONAS POR VIVIENDA (la base es 2,8) -->
-        <label for="pph">Personas por vivienda</label>
-        <select id="pph">
-          <option value="2">2,0</option>
-          <option value="2.5">2,5</option>
-          <option value="2.8" selected>2,8 (base)</option>
-          <option value="3">3,0</option>
-          <option value="3.5">3,5</option>
-          <option value="4">4,0</option>
-        </select>
-        <div class="hint">Se multiplica por las viviendas para obtener el número de personas.</div>
-      </div>
-      <div>
-        <label for="consumo">Ración diaria (L/persona/día)</label>
-        <input type="number" id="consumo" value="100" min="1" step="1">
-        <div class="hint">Litros diarios por persona. Editable.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="stage">
-      <!-- 🛠️ MARCADOR: AQUÍ PUEDES EDITAR LOS ICONOS Y TEXTOS ESTÁTICOS DE LA BALANZA -->
-      <svg viewBox="0 0 560 300" role="img" aria-label="Balanza comparando el agua de la palta con el agua diaria de la región">
-        <!-- base -->
-        <polygon points="280,290 240,260 320,260" fill="var(--agua-1)"/>
-        <rect x="276" y="100" width="8" height="164" fill="var(--agua-1)"/>
-        <circle cx="280" cy="96" r="8" fill="var(--agua-1)"/>
-
-        <g id="beam" style="transform-origin:280px 96px; transition:transform .7s cubic-bezier(.34,1.4,.64,1);">
-          <rect x="60" y="92" width="440" height="8" rx="4" fill="var(--tierra)"/>
-          <!-- left pan: palta -->
-          <line x1="90" y1="96" x2="90" y2="150" stroke="var(--palta-2)" stroke-width="2"/>
-          <line x1="140" y1="96" x2="140" y2="150" stroke="var(--palta-2)" stroke-width="2"/>
-          <path d="M75,150 Q115,190 155,150" fill="none" stroke="var(--palta-1)" stroke-width="4" stroke-linecap="round"/>
-          <text x="115" y="150" font-size="34" text-anchor="middle">🥑</text>
-          <text x="115" y="205" text-anchor="middle" class="pan-label" id="lbl-kg">253.136.300 kg</text>
-          <text x="115" y="224" text-anchor="middle" class="pan-value" id="lbl-litros-palta">= 501.5B L</text>
-
-          <!-- right pan: camión aljibe -->
-          <line x1="420" y1="96" x2="420" y2="150" stroke="var(--agua-2)" stroke-width="2"/>
-          <line x1="470" y1="96" x2="470" y2="150" stroke="var(--agua-2)" stroke-width="2"/>
-          <path d="M405,150 Q445,190 485,150" fill="none" stroke="var(--agua-1)" stroke-width="4" stroke-linecap="round"/>
-          <text x="445" y="152" font-size="28" text-anchor="middle">🚛</text>
-          <text x="445" y="205" text-anchor="middle" class="pan-label">1 día de camión aljibe</text>
-          <text x="445" y="224" text-anchor="middle" class="pan-value" id="lbl-litros-region">= 6.557.050 L</text>
-        </g>
-      </svg>
-    </div>
-
-    <p class="resultado" id="resultado-principal"></p>
-    <p class="sub" id="resultado-secundario"></p>
-  </div>
-
-  <!-- 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR LAS FUENTES Y CITAS AL PIE DE PÁGINA -->
-  <p class="fuentes">
-    Huella hídrica promedio mundial de la palta: Mekonnen &amp; Hoekstra (2010), <i>The green, blue and grey water footprint of crops and derived crop products</i>. Hectáreas: catastro frutícola CIREN/ODEPA (últimos años con catastro completo). Rendimiento: comparación internacional de rendimientos de palto por país. Personas dependientes de camión aljibe: tu dataset censal (valores de referencia calculados sobre las categorías de fuente de agua). Todos los valores son editables — ajústalos con tus propias cifras de comuna o región.
-  </p>
+  <!-- La visualización vive en visualizaciones/balanza/index.html. Ajusta su altura sola. -->
+  <iframe id="balanza" class="balanza" src="visualizaciones/balanza/index.html" title="Agua de la palta vs. camiones aljibe" loading="lazy"></iframe>
 
   <section class="mapa">
     <h2>Impacto Territorial: Plantaciones vs. Escasez Hídrica</h2>
@@ -181,126 +75,15 @@
 </div>
 
 <script>
-  const haInput = document.getElementById('ha');
-  const rendInput = document.getElementById('rendimiento');
-  const huellaInput = document.getElementById('huella');
-  const viviendasSelect = document.getElementById('viviendas');
-  const pphSelect = document.getElementById('pph');
-  const consumoInput = document.getElementById('consumo');
-  const beam = document.getElementById('beam');
-  const lblKg = document.getElementById('lbl-kg');
-  const lblLitrosPalta = document.getElementById('lbl-litros-palta');
-  const lblLitrosRegion = document.getElementById('lbl-litros-region');
-  const resPrincipal = document.getElementById('resultado-principal');
-  const resSecundario = document.getElementById('resultado-secundario');
-
-  // 🛠️ MARCADOR: AQUÍ PUEDES CAMBIAR EL FORMATO DE LOS NÚMEROS (PUNTOS Y COMAS)
-  function fmt(n){
-    return Math.round(n).toLocaleString('es-CL');
-  }
-  function fmtCompacto(n){
-    return new Intl.NumberFormat('es-CL', {notation:'compact', maximumFractionDigits:1}).format(n);
-  }
-
-  // 🛠️ MARCADOR: DATOS DE CAMIÓN ALJIBE. Se leen de datos_camion_aljibe.json ({"Región": viviendas, ...}).
-  // Si el archivo no se puede leer (p. ej. al abrir el HTML con doble clic) se usan estos valores de respaldo.
-  const DATOS_RESPALDO = {
-    "Antofagasta": 7523,
-    "Arica y Parinacota": 3989,
-    "Atacama": 10192,
-    "Aysén del General Carlos Ibáñez del Campo": 61,
-    "Biobío": 7432,
-    "Coquimbo": 16817,
-    "La Araucanía": 16817,
-    "Libertador General Bernardo O'Higgins": 4272,
-    "Los Lagos": 4159,
-    "Los Ríos": 1909,
-    "Magallanes y de la Antártica Chilena": 1169,
-    "Maule": 5731,
-    "Metropolitana de Santiago": 10155,
-    "Tarapacá": 11306,
-    "Valparaíso": 24560,
-    "Ñuble": 5049
-};
-  const estadoDatos = document.getElementById('estado-datos');
-
-  // Acepta [{"region": "...", "cantidad": n}, ...] o un diccionario {"región": n, ...}
-  function normalizar(json){
-    const out = {};
-    const pares = Array.isArray(json)
-      ? json.map(it => [it && it.region, it && it.cantidad])
-      : Object.entries(json || {});
-    pares.forEach(([nombre, valor]) => {
-      const n = Number(valor);
-      if (typeof nombre === 'string' && Number.isFinite(n) && n >= 0) out[nombre] = n;
+  // Ajusta la altura del iframe con la que informa la visualización (sin scroll interno)
+  (function(){
+    const frame = document.getElementById('balanza');
+    window.addEventListener('message', function(e){
+      if (e.source !== frame.contentWindow) return;
+      const d = e.data;
+      if (d && d.tipo === 'balanza-altura' && Number.isFinite(d.altura)) frame.style.height = d.altura + 'px';
     });
-    return out;
-  }
-
-  function poblarSelect(datos){
-    const entradas = Object.entries(datos);
-    // Opción "Nacional" = suma de todas las regiones (si el JSON no trae una propia)
-    if (!entradas.some(([k]) => k.trim().toLowerCase() === 'nacional')){
-      const suma = entradas.reduce((acc, [, v]) => acc + v, 0);
-      entradas.unshift(['Nacional (suma de regiones)', suma]);
-    }
-    viviendasSelect.textContent = '';
-    entradas.forEach(([nombre, valor]) => {
-      const op = document.createElement('option');
-      op.value = valor;
-      op.textContent = nombre + ' — ' + fmt(valor);
-      viviendasSelect.appendChild(op);
-    });
-    viviendasSelect.selectedIndex = 0;
-    calcular();
-  }
-
-  async function cargarDatosAljibe(){
-    estadoDatos.textContent = 'Datos de datos_camion_aljibe.json.';
-    poblarSelect(DATOS_RESPALDO);
-  }
-
-  // 🛠️ MARCADOR: AQUÍ PUEDES MODIFICAR LA LÓGICA DE LAS MATEMÁTICAS Y EL COMPORTAMIENTO DE LA BALANZA
-  function calcular(){
-    const ha = Math.max(0, parseFloat(haInput.value) || 0);
-    const rendimiento = Math.max(0, parseFloat(rendInput.value) || 0);
-    const huella = Math.max(0, parseFloat(huellaInput.value) || 0);
-    const viviendas = Math.max(0, parseFloat(viviendasSelect.value) || 0);
-    const pph = Math.max(0, parseFloat(pphSelect.value) || 0);
-    const personas = viviendas * pph;
-    const consumo = Math.max(1, parseFloat(consumoInput.value) || 1);
-
-    const kgProducidos = ha * rendimiento;
-    const litrosPalta = kgProducidos * huella;
-    const litrosAljibeDia = personas * consumo;
-
-    lblKg.textContent = fmt(kgProducidos) + " kg";
-    lblLitrosPalta.textContent = "= " + fmtCompacto(litrosPalta) + " L";
-    lblLitrosRegion.textContent = "= " + fmt(litrosAljibeDia) + " L";
-
-    // 🛠️ MARCADOR: AQUÍ PUEDES AJUSTAR QUÉ TANTO SE INCLINA LA BALANZA (anguloMax) Y LA ESCALA (Math.log10)
-    const ratio = litrosAljibeDia > 0 ? litrosPalta / litrosAljibeDia : 0;
-    const logRatio = ratio > 0 ? Math.log10(ratio) : -3;
-    const anguloMax = 16;
-    let angulo = Math.max(-anguloMax, Math.min(anguloMax, logRatio * 8));
-    beam.style.transform = "rotate(" + (-angulo) + "deg)";
-
-    // 🛠️ MARCADOR: AQUÍ PUEDES EDITAR LOS TEXTOS DEL PÁRRAFO DE RESULTADOS
-    if (ratio >= 1){
-      resPrincipal.innerHTML = "Esa producción de palto carga tanta agua como <b>" + fmt(ratio) + " días</b> de ración mínima para las " + fmt(personas) + " personas que dependen de camión aljibe.";
-      resSecundario.textContent = "Eso equivale a cerca de " + fmtCompacto(ratio/365) + " años de esa ración diaria.";
-    } else {
-      const porcentaje = ratio * 100;
-      resPrincipal.innerHTML = "Esa producción de palto cubriría sólo el <b>" + porcentaje.toFixed(2) + "%</b> de un día de ración mínima para esas personas.";
-      resSecundario.textContent = "Habría que multiplicar la producción por " + fmtCompacto(1/ratio) + " para igualar un solo día de ración.";
-    }
-  }
-
-  [haInput, rendInput, huellaInput, consumoInput].forEach(el => el.addEventListener('input', calcular));
-  [viviendasSelect, pphSelect].forEach(el => el.addEventListener('change', calcular));
-  calcular();
-  cargarDatosAljibe();
-
+  })();
 </script>
 </body>
 </html>
