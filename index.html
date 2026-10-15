@@ -50,6 +50,7 @@
     margin-bottom:1.4rem;
   }
   .balanza{width:100%; border:0; display:block; min-height:560px;}
+  .escala-agua{width:100%; border:0; display:block; min-height:700px; border-radius:18px; overflow:hidden;}
 
   section.mapa{margin:1.2rem 0 2rem; padding-bottom:1.8rem; border-bottom:1px solid rgba(0,0,0,.08);}
   section.mapa p.desc{opacity:.75; margin:0 0 1.2rem; max-width:65ch; line-height:1.5;}
@@ -120,16 +121,14 @@
     <h1>¿La producción de palta produce escasez hídrica?</h1>
 
     <div class="carrusel-contenedor">
-        
-        <!-- SLIDE 1: ESPACIO PARA TU FUTURO GRÁFICO (Activo por defecto) -->
         <div class="slide activo" id="slide-0">
-            <h2>(Título de tu primer gráfico)</h2>
-            <p class="desc">Aquí irá la descripción de la primera visualización.</p>
-            
-            <!-- Recuadro temporal mientras haces el gráfico -->
-            <div style="min-height: 500px; border: 2px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #8a9ba8; border-radius: 14px;">
-                Espacio reservado para el Gráfico 1
-            </div>
+            <section class="mapa" style="border:none; margin:0; padding:0;">
+                <h2>El costo hídrico de la palta</h2>
+                <p class="desc">Proporción de agua necesaria para la producción en comparación con otros consumos.</p>
+                
+                <!-- Este iframe carga tu nuevo gráfico de la carpeta escala_agua -->
+                <iframe id="escala-agua" style="width: 100%; min-height: 650px; border: none;" src="visualizaciones/escala_agua/index.html" title="Escala de Agua" loading="lazy"></iframe>
+            </section>
         </div>
 
         <!-- SLIDE 2: TU MAPA CON SONIDO (El código exacto que ya tenías) -->
