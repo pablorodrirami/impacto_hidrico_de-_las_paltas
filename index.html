@@ -77,28 +77,99 @@
   #globo .barra{height:6px; border-radius:3px; background:rgba(255,255,255,.12); overflow:hidden;}
   #globo .barra i{display:block; height:100%;}
   #globo small{display:block; opacity:.7; margin-top:.3rem; line-height:1.3;}
+  /* --- ESTILOS DEL CARRUSEL --- */
+  .carrusel-contenedor {
+     position: relative; width: 100%; min-height: 600px; margin-top: 1rem;
+  }
+  .slide {
+      display: none; /* Oculta todos los gráficos por defecto */
+      animation: fadeIn 0.4s ease-in-out;
+  }
+  .slide.activo {
+      display: block; /* Solo muestra el que tiene la clase activo */
+  }
+  @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+  }
+  .controles-carrusel {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 2rem; padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .btn-nav {
+      background: transparent; color: var(--agua-3);
+      border: 1px solid var(--agua-3); padding: 0.5rem 1.5rem;
+      border-radius: 99px; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+  }
+  .btn-nav:hover { background: rgba(77, 194, 215, 0.1); }
+  .btn-nav:disabled { opacity: 0; pointer-events: none; }
+  .indicadores { display: flex; gap: 8px; }
+  .punto {
+      width: 10px; height: 10px; border-radius: 50%;
+     background: rgba(255,255,255,0.2); transition: 0.3s;
+  }
+  .punto.activo { background: var(--agua-3); }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>¿Cuánta agua se exporta en forma de palta desde comunas que hoy están en escasez hídrica decretada?</h1>
+ <div class="wrap">
+    <!-- TÍTULO PRINCIPAL FIJO -->
+    <h1>¿La producción de palta produce escasez hídrica?</h1>
 
-  <section class="mapa">
-    <h2>Impacto Territorial: Plantaciones vs. Escasez Hídrica</h2>
-    <p class="desc">Comparativa geográfica entre la concentración de hectáreas plantadas de palto y la cantidad de decretos de escasez hídrica por región. Pasa el mouse (o toca) sobre una región para ver su cifra y escuchar su sonido.</p>
-    <button type="button" id="btn-sonido" class="btn-sonido" aria-pressed="false">🔇 Activar sonido</button>
-    <div class="mapas">
-      <figure class="mapa-card" id="m-palto"></figure>
-      <figure class="mapa-card" id="m-escasez"></figure>
+    <div class="carrusel-contenedor">
+        
+        <!-- SLIDE 1: ESPACIO PARA TU FUTURO GRÁFICO (Activo por defecto) -->
+        <div class="slide activo" id="slide-0">
+            <h2>(Título de tu primer gráfico)</h2>
+            <p class="desc">Aquí irá la descripción de la primera visualización.</p>
+            
+            <!-- Recuadro temporal mientras haces el gráfico -->
+            <div style="min-height: 500px; border: 2px dashed rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; color: #8a9ba8; border-radius: 14px;">
+                Espacio reservado para el Gráfico 1
+            </div>
+        </div>
+
+        <!-- SLIDE 2: TU MAPA CON SONIDO (El código exacto que ya tenías) -->
+        <div class="slide" id="slide-1">
+            <section class="mapa" style="border:none; margin:0; padding:0; padding-bottom: 0;">
+                <h2>Impacto Territorial: Plantaciones vs. Escasez Hídrica</h2>
+                <p class="desc">Comparativa geográfica entre la concentración de hectáreas plantadas de palto y la cantidad de decretos de escasez.</p>
+                <button type="button" id="btn-sonido" class="btn-sonido" aria-pressed="false">🔇 Activar sonido</button>
+                <div class="mapas">
+                    <figure class="mapa-card" id="m-palto"></figure>
+                    <figure class="mapa-card" id="m-escasez"></figure>
+                </div>
+                <p class="creditos">Sonidos de floraphonic, freesound_community y kanah95 (Pixabay), recortados y con el volumen igualado.</p>
+                <div id="globo" role="tooltip"></div>
+            </section>
+        </div>
+
+        <!-- SLIDE 3: EL NUEVO MAPA INTERACTIVO DE PLOTLY -->
+        <div class="slide" id="slide-2">
+            <section class="mapa" style="border:none; margin:0; padding:0;">
+                <h2>Uso de Agua por Región: Producción y Exportación</h2>
+                <p class="desc">Explora el mapa interactivo pasando el cursor para ver el volumen de agua gastada en producción regional.</p>
+                
+                <!-- Llama al mapa que creamos en Python -->
+                <iframe id="mapa3" style="width: 100%; min-height: 820px; border: none;" src="visualizaciones/mapa_interactivo_agua.html" title="Mapa Interactivo Agua" loading="lazy"></iframe>
+            </section>
+        </div>
+
     </div>
-    <p class="creditos">Sonidos de floraphonic, freesound_community y kanah95 (Pixabay), recortados y con el volumen igualado.</p>
-    <div id="globo" role="tooltip"></div>
-  </section>
-  <p class="lead">Compara el agua que exige un año de producción de palta con la ración mínima de agua de las personas que dependen de camión aljibe.</p>
 
-  <!-- La visualización vive en visualizaciones/balanza/index.html. Ajusta su altura sola. -->
-  <iframe id="balanza" class="balanza" src="visualizaciones/balanza/index.html" title="Agua de la palta vs. camiones aljibe" loading="lazy"></iframe>
-
+    <!-- BOTONES DE NAVEGACIÓN (Flechas) -->
+    <div class="controles-carrusel">
+        <button id="btn-prev" class="btn-nav" disabled>&#8592; Anterior</button>
+        <div class="indicadores">
+            <span class="punto activo"></span>
+            <span class="punto"></span>
+            <span class="punto"></span>
+        </div>
+        <button id="btn-next" class="btn-nav">Siguiente &#8594;</button>
+    </div>
 </div>
 
 <script>
@@ -263,6 +334,43 @@
   });
   document.addEventListener('pointerdown',e=>{ if(!e.target.classList || !e.target.classList.contains('reg')) ocultar(); });
 })();
+</script>
+<script>
+    // --- LÓGICA DEL CARRUSEL (Botones Anterior / Siguiente) ---
+    const slides = document.querySelectorAll('.slide');
+    const puntos = document.querySelectorAll('.punto');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    let slideActual = 0;
+
+    function actualizarCarrusel(indice) {
+        // Ocultar todos los slides y desactivar puntos
+        slides.forEach(s => s.classList.remove('activo'));
+        puntos.forEach(p => p.classList.remove('activo'));
+        
+        // Mostrar el slide actual
+        slides[indice].classList.add('activo');
+        puntos[indice].classList.add('activo');
+        
+        // Desactivar el botón "Anterior" si estamos en el primer slide
+        btnPrev.disabled = (indice === 0);
+        // Desactivar el botón "Siguiente" si estamos en el último slide
+        btnNext.disabled = (indice === slides.length - 1);
+    }
+
+    btnPrev.addEventListener('click', () => {
+        if(slideActual > 0) {
+            slideActual--;
+            actualizarCarrusel(slideActual);
+        }
+    });
+
+    btnNext.addEventListener('click', () => {
+        if(slideActual < slides.length - 1) {
+            slideActual++;
+            actualizarCarrusel(slideActual);
+        }
+    });
 </script>
 </body>
 </html>
