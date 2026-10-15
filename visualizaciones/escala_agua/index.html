@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escala Hídrica de la Palta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --agua-1: #0d3b4a;
+    --agua-2: #1f7a8c;
+    --agua-3: #4dc2d7;
+    --agua-4: #a8e6ef;
+    --palta-1: #4c6b2f;
+    --palta-2: #8a9a3a;
+    --palta-3: #c5d96a;
+    --bg: #0a1f2e;
+    --card: #0f2d3d;
+    --card2: #0c2030;
+    --ink: #e8f4f8;
+    --ink-dim: #6fa8bb;
+    --sep: rgba(77,194,215,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── BURBUJAS ─── */
+  .bg-particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bubble {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(77,194,215,0.14), rgba(31,122,140,0.02));
+    animation: float-up linear infinite;
+  }
+  @keyframes float-up {
+    0%   { transform: translateY(100vh) scale(0.5); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-20vh) scale(1.1); opacity: 0; }
+  }
+
+  /* ─── WRAP ─── */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 960px; margin: 0 auto;
+    padding: 2rem 1.2rem 3rem;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .header h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    color: var(--agua-3);
+    line-height: 1.2;
+    margin-bottom: .5rem;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: rgba(77,194,215,0.1);
+    border: 1px solid rgba(77,194,215,0.25);
+    border-radius: 999px;
+    padding: .3rem .85rem;
+    font-size: .8rem;
+    color: var(--agua-3);
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+
+  /* ─── PANEL PRINCIPAL ─── */
+  .panel {
+    background: var(--card);
+    border-radius: 22px;
+    border: 1px solid var(--sep);
+    overflow: hidden;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+  }
+
+  /* ─── LAYOUT BIPARTITO ─── */
+  .bipart {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 380px;
+  }
+
+  /* TAGS DE COLUMNA */
+  .lado-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    margin-bottom: .75rem;
+  }
+  .tag-palta {
+    background: rgba(138,154,58,0.15);
+    border: 1px solid rgba(197,217,106,0.3);
+    color: var(--palta-3);
+  }
+  .tag-equiv {
+    background: rgba(77,194,215,0.15);
+    border: 1px solid rgba(77,194,215,0.35);
+    color: var(--agua-3);
+  }
+
+  /* LADO IZQUIERDO — paltas */
+  .lado-paltas {
+    background: linear-gradient(160deg, rgba(76,107,47,0.18) 0%, rgba(13,59,74,0.12) 100%);
+    border-right: 1px solid var(--sep);
+    padding: 1.6rem 1.4rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .lado-paltas .sector-num {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(2rem, 5.5vw, 3.6rem);
+    color: var(--palta-3);
+    line-height: 1;
+    margin-bottom: .2rem;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .lado-paltas .sector-label {
+    font-size: .78rem;
+    color: #8dae5a;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    min-height: 1.2rem;
+  }
+
+  /* Grid de emojis */
+  .avo-field {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .avo-field.dense { gap: 1px; }
+  .avo-emoji {
+    font-size: 1.4rem;
+    line-height: 1.15;
+    animation: pop-in .25s ease backwards;
+    display: inline-block;
+  }
+  .avo-field.dense .avo-emoji { font-size: 1rem; }
+  .avo-field.very-dense .avo-emoji { font-size: .7rem; }
+  @keyframes pop-in {
+    from { transform: scale(0) rotate(-20deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  /* Fade bottom para muchas paltas */
+  .avo-field.faded::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(transparent, var(--card2));
+    pointer-events: none;
+  }
+
+  /* LADO DERECHO — equivalencia */
+  .lado-equiv {
+    background: linear-gradient(160deg, rgba(13,59,74,0.18) 0%, rgba(31,122,140,0.1) 100%);
+    padding: 1.6rem 1.4rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+
+  /* Equivalencia visual: Número y textos arriba */
+  .equiv-valor {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(1.8rem, 4.5vw, 2.7rem);
+    color: var(--agua-3);
+    line-height: 1.1;
+    margin-bottom: .3rem;
+    transition: all .25s ease;
+  }
+  .equiv-desc {
+    font-size: .88rem;
+    color: var(--ink-dim);
+    font-weight: 500;
+    line-height: 1.4;
+    max-width: 30ch;
+    margin: 0 auto;
+  }
+
+  /* Icono / Emoji en el centro */
+  .equiv-visual {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0;
+  }
+  .equiv-icon {
+    font-size: 4.8rem;
+    display: inline-block;
+    line-height: 1;
+    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.35));
+    transition: transform .25s ease;
+  }
+  .equiv-icon:hover {
+    transform: scale(1.1) rotate(4deg);
+  }
+
+  /* Cuadro de asignación legal — compacto con despliegue en hover */
+  .cuadro-ley {
+    margin-top: auto;
+    width: fit-content;
+    max-width: 320px;
+    padding: .32rem .75rem;
+    background: rgba(77,194,215,0.06);
+    border: 1px solid rgba(77,194,215,0.22);
+    border-radius: 999px;
+    font-size: .72rem;
+    color: #90b7c7;
+    cursor: pointer;
+    transition: all .28s cubic-bezier(.4, 0, .2, 1);
+    user-select: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .cuadro-ley:hover,
+  .cuadro-ley:focus-within {
+    border-radius: 12px;
+    background: rgba(13,59,74,0.95);
+    border-color: rgba(77,194,215,0.5);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    padding: .55rem .85rem;
+  }
+  .ley-resumen {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+  .ley-icon {
+    font-size: .95rem;
+  }
+  .ley-pill {
+    color: #92b8c7;
+    font-weight: 500;
+  }
+  .ley-pill strong {
+    color: var(--agua-4);
+    font-weight: 600;
+  }
+  .ley-info-icon {
+    font-size: .68rem;
+    color: var(--agua-3);
+    opacity: .8;
+    margin-left: .15rem;
+  }
+  .ley-detalle {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height .3s ease, opacity .25s ease, margin-top .25s ease, padding-top .25s ease;
+    margin-top: 0;
+    padding-top: 0;
+    font-size: .71rem;
+    color: #a4cddc;
+    line-height: 1.4;
+    text-align: left;
+  }
+  .cuadro-ley:hover .ley-detalle,
+  .cuadro-ley:focus-within .ley-detalle {
+    max-height: 80px;
+    opacity: 1;
+    margin-top: .4rem;
+    padding-top: .4rem;
+    border-top: 1px solid rgba(77,194,215,0.2);
+  }
+  .ley-detalle strong {
+    color: var(--agua-3);
+  }
+
+  /* ─── FILA DE LITROS ─── */
+  .litros-row {
+    border-top: 1px solid var(--sep);
+    padding: 1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    background: rgba(13,59,74,0.35);
+  }
+  .litros-row .drop {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 2px 6px rgba(77,194,215,0.3));
+  }
+  .litros-row .litros-val {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--agua-3);
+  }
+  .litros-row .litros-label {
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 1.55rem;
+    font-weight: 500;
+    color: var(--agua-3);
+  }
+
+  /* ─── BOTONES DE ESCALA ─── */
+  .botones-wrap {
+    padding: 1.2rem 1rem 1.2rem;
+    border-top: 1px solid var(--sep);
+    background: var(--card2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: center;
+  }
+  .scale-btn {
+    background: transparent;
+    border: 1.5px solid rgba(77,194,215,0.2);
+    border-radius: 10px;
+    padding: .45rem .9rem;
+    color: var(--ink-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .scale-btn:hover {
+    border-color: rgba(77,194,215,0.5);
+    color: var(--ink);
+    transform: translateY(-1px);
+  }
+  .scale-btn.active {
+    background: rgba(77,194,215,0.12);
+    border-color: var(--agua-3);
+    color: var(--agua-3);
+    box-shadow: 0 0 12px rgba(77,194,215,0.2);
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 540px) {
+    .bipart { grid-template-columns: 1fr; }
+    .lado-paltas { border-right: none; border-bottom: 1px solid var(--sep); min-height: 220px; }
+    .avo-emoji { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-particles" id="bg-particles"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>¿Cuánta agua hay en una palta? 🥑💧</h1>
+    <span class="badge">💡 1 kg de palta = 1.000 L de agua</span>
+  </div>
+
+  <!-- PANEL PRINCIPAL -->
+  <div class="panel">
+
+    <!-- BIPARTITO -->
+    <div class="bipart">
+
+      <!-- IZQUIERDA: paltas -->
+      <div class="lado-paltas">
+        <span class="lado-tag tag-palta">🥑 En paltas</span>
+        <div class="sector-num" id="num-paltas">1</div>
+        <div class="sector-label" id="label-paltas">palta</div>
+        <div class="avo-field" id="avo-field"></div>
+      </div>
+
+      <!-- DERECHA: equivalencia -->
+      <div class="lado-equiv">
+        <span class="lado-tag tag-equiv">💧 Equivale a...</span>
+        <div class="equiv-valor" id="equiv-valor">1 ración diaria</div>
+        <div class="equiv-desc" id="equiv-desc">de agua potable para 1 persona</div>
+        <div class="equiv-visual">
+          <span class="equiv-icon" id="equiv-icon">👤</span>
+        </div>
+        <div class="cuadro-ley" tabindex="0">
+          <div class="ley-resumen">
+            <span class="ley-icon">⚖️</span>
+            <span class="ley-pill">Ración legal: <strong>100 L/día</strong></span>
+            <span class="ley-info-icon">ℹ️</span>
+          </div>
+          <div class="ley-detalle">
+            Por mandato judicial y Contraloría, la asignación mínima vital en Chile es de <strong>100 litros diarios por persona</strong>.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FILA LITROS -->
+    <div class="litros-row">
+      <span class="drop">💧</span>
+      <span class="litros-val" id="litros-val">100 litros</span>
+      <span class="litros-label">de agua</span>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="botones-wrap" id="botones-wrap"></div>
+
+  </div><!-- /panel -->
+
+</div><!-- /wrap -->
+
+<script>
+// ─── DATOS ──────────────────────────────────────────────────────
+// Estándar legal: 1 ración diaria = 100 L/día por persona (decretado por la Corte Suprema y Contraloría)
+
+const ESCALAS = [
+  {
+    key: "1palta",
+    btnLabel: "🥑 1 palta",
+    numPaltas: "1",
+    labelPaltas: "palta (~100 g)",
+    litros: 100,
+    avos: 1,
+    avoDense: false,
+    icon: "👤",
+    valor: "1 ración diaria",
+    desc: "de agua potable para 1 persona (100 L)"
+  },
+  {
+    key: "1kg",
+    btnLabel: "📦 1 kilo",
+    numPaltas: "≈10",
+    labelPaltas: "paltas (1 kilo)",
+    litros: 1000,
+    avos: 10,
+    avoDense: false,
+    icon: "🚰",
+    valor: "10 raciones diarias",
+    desc: "10 días de agua para 1 persona (o 10 personas por un día)"
+  },
+  {
+    key: "10kg",
+    btnLabel: "📦 10 kilos",
+    numPaltas: "≈100",
+    labelPaltas: "paltas (10 kilos)",
+    litros: 10000,
+    avos: 80,
+    avoDense: true,
+    icon: "🏘️",
+    valor: "100 raciones diarias",
+    desc: "100 días de agua para 1 persona (más de 3 meses)"
+  },
+  {
+    key: "100kg",
+    btnLabel: "📦 100 kilos",
+    numPaltas: "≈1.000",
+    labelPaltas: "paltas (100 kilos)",
+    litros: 100000,
+    avos: 200,
+    avoDense: true,
+    icon: "🏫",
+    valor: "1.000 raciones diarias",
+    desc: "agua potable para 1.000 personas por un día completo"
+  },
+  {
+    key: "1ton",
+    btnLabel: "🚛 1 tonelada",
+    numPaltas: "≈10.000",
+    labelPaltas: "paltas (1 tonelada)",
+    litros: 1000000,
+    avos: 400,
+    avoDense: true,
+    icon: "🏙️",
+    valor: "10.000 raciones diarias",
+    desc: "agua potable para una comunidad de 10.000 habitantes por un día"
+  },
+  {
+    key: "100ton",
+    btnLabel: "🚢 100 toneladas",
+    numPaltas: "~1 millón",
+    labelPaltas: "de paltas (100 toneladas)",
+    litros: 100000000,
+    avos: 600,
+    avoDense: true,
+    icon: "🌆",
+    valor: "1 millón de raciones",
+    desc: "de agua potable para 1 millón de personas por un día"
+  },
+  {
+    key: "265mil",
+    btnLabel: "🌎 Chile 2025–26",
+    numPaltas: "~2.650 millones",
+    labelPaltas: "de paltas producidas en Chile",
+    litros: 265000000000,
+    avos: 800,
+    avoDense: true,
+    icon: "🌎",
+    valor: "2.650 millones de raciones",
+    desc: "abastecería a todo Chile (20 millones de personas) por más de 4 meses"
+  }
+];
+
+// ─── ESTADO ─────────────────────────────────────────────────────
+let current = 0;
+
+// ─── HELPERS ────────────────────────────────────────────────────
+function formatLitros(l) {
+  if (l >= 1e9)  return (l/1e9).toLocaleString('es-CL', {maximumFractionDigits:1}) + ' mil millones de litros';
+  if (l >= 1e6)  return (l === 1e6 ? '1 millón de litros' : (l/1e6).toLocaleString('es-CL', {maximumFractionDigits:0}) + ' millones de litros');
+  return l.toLocaleString('es-CL') + ' litros';
+}
+
+// ─── RENDER PALTAS ───────────────────────────────────────────────
+function renderAvos(count, dense) {
+  const field = document.getElementById('avo-field');
+  field.innerHTML = '';
+
+  // clases de densidad
+  field.className = 'avo-field';
+  if (count > 150) field.classList.add('very-dense');
+  else if (count > 60) field.classList.add('dense');
+  if (count > 100) field.classList.add('faded');
+
+  const BATCH = 30; // animamos en lotes
+  let rendered = 0;
+
+  function addBatch() {
+    const end = Math.min(rendered + BATCH, count);
+    for (let i = rendered; i < end; i++) {
+      const s = document.createElement('span');
+      s.className = 'avo-emoji';
+      s.textContent = '🥑';
+      s.style.animationDelay = (i % BATCH) * 12 + 'ms';
+      field.appendChild(s);
+    }
+    rendered = end;
+    if (rendered < count) requestAnimationFrame(addBatch);
+  }
+  requestAnimationFrame(addBatch);
+}
+
+// ─── RENDER ESCALA ───────────────────────────────────────────────
+function setScale(idx) {
+  current = idx;
+  const d = ESCALAS[idx];
+
+  // Botones
+  document.querySelectorAll('.scale-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+  });
+
+  // Animar — ocultar durante transición para evitar flash
+  const animIds = ['num-paltas','label-paltas',
+                   'equiv-valor','equiv-desc','equiv-icon'];
+  animIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.transition = 'opacity .15s ease, transform .15s ease';
+    el.style.transform = 'scale(0.85)';
+    el.style.opacity = '0';
+  });
+
+  setTimeout(() => {
+    document.getElementById('num-paltas').textContent = d.numPaltas;
+    document.getElementById('label-paltas').textContent = d.labelPaltas;
+    document.getElementById('equiv-valor').textContent = d.valor;
+    document.getElementById('equiv-desc').textContent = d.desc;
+    document.getElementById('equiv-icon').textContent = d.icon;
+    document.getElementById('litros-val').textContent = formatLitros(d.litros);
+    renderAvos(d.avos, d.avoDense);
+    // Fade in
+    animIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.transform = '';
+      el.style.opacity = '';
+    });
+  }, 160);
+}
+
+// ─── BUILD BOTONES ───────────────────────────────────────────────
+(function buildButtons() {
+  const wrap = document.getElementById('botones-wrap');
+  ESCALAS.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'scale-btn';
+    btn.textContent = d.btnLabel;
+    btn.dataset.idx = i;
+    btn.addEventListener('click', () => setScale(i));
+    wrap.appendChild(btn);
+  });
+})();
+
+// ─── BURBUJAS ───────────────────────────────────────────────────
+(function() {
+  const c = document.getElementById('bg-particles');
+  for (let i = 0; i < 14; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const s = Math.random() * 55 + 18;
+    b.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${Math.random()*22+14}s;animation-delay:${Math.random()*18}s;`;
+    c.appendChild(b);
+  }
+})();
+
+// ─── INIT ────────────────────────────────────────────────────────
+setScale(0);
+
+// altura al parent
+function notifyHeight() {
+  if (window.parent !== window) {
+    window.parent.postMessage({ tipo: 'escala-altura', altura: document.body.scrollHeight }, '*');
+  }
+}
+window.addEventListener('load', notifyHeight);
+new MutationObserver(notifyHeight).observe(document.body, { childList:true, subtree:true });
+</script>
+</body>
+</html>
