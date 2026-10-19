@@ -203,92 +203,6 @@
       radial-gradient(circle at 68% 78%, rgba(197,217,106,0.05) 0, transparent 30%);
   }
 
-  .panoramico-layout {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: min(1680px, 99vw);
-    height: 100%;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: minmax(340px, 480px) minmax(0, 1fr) minmax(160px, 220px);
-    gap: clamp(0.7rem, 1.4vw, 1.8rem);
-    align-items: stretch;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  /* Breakpoint intermedio: pantallas chicas o angostas (laptops 1366px, ventanas partidas) */
-  @media (max-width: 1360px) {
-    #slide-1 .panoramico-layout {
-      grid-template-columns: minmax(240px, 300px) minmax(0, 1fr) minmax(140px, 170px);
-      gap: clamp(0.5rem, 1vw, 1rem);
-    }
-    #slide-1 .slide-titulo-compact {
-      font-size: clamp(1.7rem, 3.2vh, 2.4rem);
-    }
-    #slide-1 .metrica-card .num {
-      font-size: clamp(1.05rem, 1.9vh, 1.35rem);
-    }
-    #slide-1 .metrica-card .ico {
-      font-size: clamp(1.2rem, 2.2vh, 1.6rem);
-    }
-    #slide-1 .control-remoto button {
-      font-size: 0.85rem;
-      padding: 0.7rem 0.55rem;
-    }
-  }
-  /* Pantallas muy angostas pero aún en desktop (split-screen, tablets horizontales) */
-  @media (max-width: 1100px) {
-    #slide-1 .panoramico-layout {
-      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(130px, 160px);
-    }
-    #slide-1 .slide-titulo-compact {
-      font-size: clamp(1.55rem, 3vh, 2.1rem);
-    }
-  }
-
-  /* La "línea invisible" era el padding lateral del slide: lo anulamos solo aquí */
-  #slide-1 {
-    padding-left: clamp(1rem, 2.5vw, 2.5rem);
-    padding-right: clamp(1rem, 2.5vw, 2.5rem);
-    padding-top: clamp(0.6rem, 2vh, 1.4rem);
-    padding-bottom: clamp(0.6rem, 2vh, 1.4rem);
-  }
-  #slide-1 .panoramico-layout {
-    margin-left: 0;
-    max-width: none;
-    width: 100%;
-  }
-
-  .col-narrativa {
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    height: 100%;
-    min-height: 0;
-    width: 100%;
-    max-width: 480px;
-    padding: 0;
-    margin-left: 0;
-    overflow: visible;
-    align-content: stretch;
-  }
-  .col-narrativa .bloque-titulo {
-    padding-top: 0;
-    margin-bottom: 0;
-    align-self: start;
-  }
-  .col-narrativa .paso-tag {
-    margin-bottom: 0.55rem;
-  }
-  .col-narrativa .bloque-leyenda {
-    margin-top: 0;
-    padding-bottom: 0;
-    align-self: end;
-    justify-self: end;
-    width: 100%;
-    max-width: 330px;
-  }
   .leyenda-titulo {
     font-size: 0.68rem;
     font-weight: 700;
@@ -372,48 +286,53 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     SLIDE 1 · TEMA AZUL + TV
-     (todo está scopeado a #slide-1: el resto del proyecto no cambia)
+     SLIDE 1 · LAYOUT + TV   (paleta del proyecto)
+     Escritorio (>960px): "escenario" de diseño 1920×1080 que se escala
+     completo a la ventana (ver ajustarEscena1 en el JS) → se ve igual
+     en 1080p, 1440p, laptops y con zoom del sistema.
+     Móvil (≤960px): flujo vertical normal.
+     Todo está scopeado a #slide-1 (las otras slides no cambian).
      ═══════════════════════════════════════════════════════════ */
-  #slide-1 {
-    --accent: #6cb6ff;
-    --tierra: #ffb36b;
-    --palta-3: #a8e68c;
-    --ink-dim: rgba(226,238,255,0.72);
-    --s1-card: rgba(9,22,52,0.82);
-    --s1-line: rgba(120,175,255,0.24);
-    background: linear-gradient(145deg, #040a1d 0%, #0a1a3f 55%, #0b2250 100%);
+
+  /* ── Base (móvil primero) ── */
+  #slide-1 .panoramico-layout {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 96vw;
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    gap: 0.9rem;
+    overflow-y: auto;
   }
-  #slide-1::before {
-    background:
-      radial-gradient(circle at 18% 84%, rgba(90,160,255,0.17) 0, transparent 34%),
-      radial-gradient(circle at 84% 10%, rgba(125,110,255,0.13) 0, transparent 30%),
-      radial-gradient(circle at 66% 80%, rgba(70,200,255,0.07) 0, transparent 30%);
+  #slide-1 .slide-titulo-compact {
+    font-size: clamp(1.7rem, 8.2vw, 2.6rem);
+    line-height: 1.08;
   }
-  #slide-1 .metrica-card {
-    background: var(--s1-card);
-    border-color: var(--s1-line);
-    box-shadow: 0 6px 18px rgba(0,0,20,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
-  }
+  #slide-1 .bloque-leyenda { width: 100%; }
 
   /* ── Carcasa de la TV (bisel con profundidad) ── */
   #slide-1 .tv-container {
     position: relative;
     display: flex;
-    width: min(100%, 1060px, calc((100dvh - 3.6rem) * 16 / 9));
-    aspect-ratio: 16 / 9;
+    width: 100%;
+    max-width: 680px;
+    aspect-ratio: 4 / 3;
     min-width: 0;
     justify-self: center;
     align-self: center;
     padding: clamp(7px, 1.1%, 14px) clamp(7px, 1.1%, 14px) clamp(12px, 1.8%, 22px);
     border-radius: 22px;
-    background: linear-gradient(155deg, #2a3f6e 0%, #0f1c3a 38%, #0a1329 70%, #1a2a52 100%);
+    background: linear-gradient(155deg, #24413b 0%, #0e201c 38%, #08130f 70%, #1b332e 100%);
     box-shadow:
       0 34px 60px -18px rgba(0,0,0,0.85),
-      0 0 0 1px rgba(150,195,255,0.22),
-      inset 0 1px 0 rgba(255,255,255,0.22),
+      0 0 0 1px rgba(77,194,215,0.24),
+      inset 0 1px 0 rgba(255,255,255,0.18),
       inset 0 -2px 6px rgba(0,0,0,0.6),
-      0 0 90px rgba(70,140,255,0.20);
+      0 0 90px rgba(77,194,215,0.14);
   }
   /* brillo en el "piso" bajo la TV */
   #slide-1 .tv-container::before {
@@ -422,7 +341,7 @@
     left: 12%; right: 12%; bottom: -5%;
     height: 9%;
     z-index: -1;
-    background: radial-gradient(ellipse at center, rgba(90,160,255,0.5), transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(77,194,215,0.42), transparent 70%);
     filter: blur(12px);
     pointer-events: none;
   }
@@ -432,8 +351,8 @@
     left: 50%; bottom: clamp(4px, 0.6%, 8px);
     width: 5px; height: 5px; margin-left: -2px;
     border-radius: 50%;
-    background: #6cb6ff;
-    box-shadow: 0 0 8px 2px rgba(108,182,255,0.9);
+    background: var(--accent);
+    box-shadow: 0 0 8px 2px rgba(77,194,215,0.85);
   }
 
   /* ── Pantalla: SIEMPRE dividida en izquierda | derecha ── */
@@ -446,11 +365,11 @@
     grid-template-columns: 1fr 1fr;
     border-radius: 14px;
     overflow: hidden;
-    background: #061330;
+    background: #07130f;
     box-shadow:
-      inset 0 0 0 1px rgba(120,180,255,0.28),
+      inset 0 0 0 1px rgba(77,194,215,0.26),
       inset 0 0 70px rgba(0,0,0,0.65),
-      inset 0 0 22px rgba(80,150,255,0.25);
+      inset 0 0 22px rgba(77,194,215,0.18);
   }
   /* reflejo de vidrio + líneas de pantalla sutiles */
   #slide-1 .tv-screen::after {
@@ -459,8 +378,8 @@
     z-index: 3;
     pointer-events: none;
     background:
-      linear-gradient(115deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 22%, transparent 40%),
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.016) 0 1px, transparent 1px 3px);
+      linear-gradient(115deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 22%, transparent 40%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.014) 0 1px, transparent 1px 3px);
   }
   #slide-1 .tv-divisor {
     position: absolute;
@@ -468,8 +387,8 @@
     width: 2px; margin-left: -1px;
     z-index: 2;
     border-radius: 2px;
-    background: linear-gradient(180deg, transparent, rgba(150,200,255,0.85) 20%, rgba(150,200,255,0.85) 80%, transparent);
-    box-shadow: 0 0 14px 2px rgba(100,170,255,0.55);
+    background: linear-gradient(180deg, transparent, rgba(168,230,239,0.85) 20%, rgba(168,230,239,0.85) 80%, transparent);
+    box-shadow: 0 0 14px 2px rgba(77,194,215,0.5);
   }
 
   #slide-1 .tv-lado {
@@ -485,13 +404,13 @@
   }
   #slide-1 .tv-lado-paltas {
     background:
-      radial-gradient(120% 90% at 50% 40%, rgba(120,220,120,0.15), transparent 62%),
-      linear-gradient(180deg, #0a1a3a, #07122a);
+      radial-gradient(120% 90% at 50% 40%, rgba(123,224,123,0.14), transparent 62%),
+      linear-gradient(180deg, #0c211b, #081611);
   }
   #slide-1 .tv-lado-equiv {
     background:
-      radial-gradient(120% 90% at 50% 40%, rgba(80,170,255,0.25), transparent 62%),
-      linear-gradient(180deg, #0b2150, #07163a);
+      radial-gradient(120% 90% at 50% 40%, rgba(77,194,215,0.22), transparent 62%),
+      linear-gradient(180deg, #0b2a33, #08181d);
   }
 
   /* etiquetas "En paltas" / "Equivale a…" */
@@ -508,8 +427,8 @@
     border-radius: 999px;
     border: 1px solid;
   }
-  #slide-1 .tag-palta { color: #c7f5a8; border-color: rgba(168,230,140,0.4); background: rgba(120,200,90,0.14); }
-  #slide-1 .tag-equiv { color: #bfe0ff; border-color: rgba(120,180,255,0.45); background: rgba(80,150,255,0.16); }
+  #slide-1 .tag-palta { color: var(--palta-3); border-color: rgba(197,217,106,0.42); background: rgba(138,154,58,0.16); }
+  #slide-1 .tag-equiv { color: var(--agua-4); border-color: rgba(77,194,215,0.45); background: rgba(77,194,215,0.14); }
 
   /* escena: emojis grandes */
   #slide-1 .tv-escena {
@@ -538,12 +457,40 @@
     animation: avo-pop 0.5s cubic-bezier(.2,1.4,.4,1) both;
     filter: drop-shadow(0 0.05em 0.08em rgba(0,0,0,0.45));
   }
-  #slide-1 .tv-icono {
-    font-size: min(30cqh, 16cqw);
-    line-height: 1;
-    animation: avo-pop 0.5s cubic-bezier(.2,1.4,.4,1) both;
-    filter: drop-shadow(0 0.05em 0.12em rgba(0,0,0,0.5));
+
+  /* escalera de magnitud: persona → pueblo → ciudad */
+  #slide-1 .tv-escalera {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2cqw;
+    width: 100%;
+    padding: 0 1cqw;
   }
+  #slide-1 .paso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1cqh;
+    opacity: 0.2;
+    filter: grayscale(0.9);
+    transform-origin: 50% 100%;
+    transition: opacity 0.45s ease, filter 0.45s ease, transform 0.45s cubic-bezier(.2,1.3,.4,1);
+  }
+  #slide-1 .paso .e { display: block; line-height: 1; }
+  #slide-1 .paso:nth-child(1) .e { font-size: min(16cqh, 6.6cqw); }
+  #slide-1 .paso:nth-child(2) .e { font-size: min(22cqh, 9cqw); }
+  #slide-1 .paso:nth-child(3) .e { font-size: min(28cqh, 11.6cqw); }
+  #slide-1 .paso small {
+    font-size: clamp(8px, 1.3cqw, 14px);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+  #slide-1 .paso.activo { opacity: 1; filter: none; transform: scale(1.08); }
+  #slide-1 .paso.activo .e { filter: drop-shadow(0 0 0.22em rgba(77,194,215,0.6)); }
+  #slide-1 .paso.activo small { color: var(--agua-4); }
 
   /* textos */
   #slide-1 .tv-bloque {
@@ -560,7 +507,7 @@
     font-size: clamp(26px, 7.2cqw, 92px);
     line-height: 1;
     color: #fff;
-    text-shadow: 0 0 0.5em rgba(140,230,120,0.35);
+    text-shadow: 0 0 0.5em rgba(123,224,123,0.3);
   }
   #slide-1 .tv-valor {
     font-family: 'Fraunces', Georgia, serif;
@@ -569,7 +516,7 @@
     line-height: 1.08;
     color: #fff;
     text-wrap: balance;
-    text-shadow: 0 0 0.5em rgba(110,180,255,0.4);
+    text-shadow: 0 0 0.5em rgba(77,194,215,0.4);
   }
   #slide-1 .tv-sub {
     font-size: clamp(10px, 1.85cqw, 20px);
@@ -581,8 +528,8 @@
   #slide-1 .tv-nota {
     font-size: clamp(9px, 1.4cqw, 14px);
     font-weight: 600;
-    color: #c7f5a8;
-    opacity: 0.85;
+    color: var(--palta-3);
+    opacity: 0.9;
   }
   #slide-1 .tv-nota:empty { display: none; }
   #slide-1 .tv-litros {
@@ -591,11 +538,11 @@
     gap: 0.45em;
     font-size: clamp(10px, 2cqw, 22px);
     font-weight: 600;
-    color: #d3e8ff;
+    color: var(--agua-4);
     padding: 0.45em 1em;
     border-radius: 999px;
-    background: rgba(80,150,255,0.14);
-    border: 1px solid rgba(120,180,255,0.35);
+    background: rgba(77,194,215,0.12);
+    border: 1px solid rgba(77,194,215,0.38);
     text-wrap: balance;
   }
   #slide-1 .pop { animation: tv-fade 0.45s ease both; }
@@ -609,89 +556,125 @@
     to   { opacity: 1; transform: none; }
   }
   @media (prefers-reduced-motion: reduce) {
-    #slide-1 .avo-emoji, #slide-1 .tv-icono, #slide-1 .pop { animation: none; }
+    #slide-1 .avo-emoji, #slide-1 .pop { animation: none; }
+    #slide-1 .paso { transition: none; }
   }
 
-  /* ── Control remoto (a la derecha de la TV) ── */
+  /* ── Control remoto ── */
   #slide-1 .control-remoto {
-    align-self: center;
-    justify-self: end;
     width: 100%;
-    max-width: 220px;
-    max-height: calc(100dvh - 3rem);
-    min-height: 0;
-    overflow-y: auto;
     display: flex;
-    flex-direction: column;
-    gap: clamp(0.5rem, 1.2vh, 0.75rem);
-    padding: clamp(0.8rem, 1.8vh, 1.2rem) clamp(0.7rem, 1vw, 1rem);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.9rem;
     border-radius: 22px;
-    background: linear-gradient(170deg, rgba(22,40,84,0.92), rgba(8,18,44,0.94));
-    border: 1px solid var(--s1-line);
-    box-shadow: 0 16px 36px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.10);
+    background: rgba(9,23,20,0.72);
+    border: 1px solid rgba(77,194,215,0.22);
+    box-shadow: 0 16px 36px -10px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.07);
   }
-  .control-remoto-titulo {
+  #slide-1 .control-remoto-titulo {
+    width: 100%;
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-dim);
     text-align: center;
-    margin-bottom: 0.25rem;
   }
-  .control-remoto button {
-    padding: 1rem 0.8rem;
+  #slide-1 .control-remoto button {
+    flex: 1 1 140px;
+    padding: 0.9rem 0.6rem;
     font-family: 'Inter', sans-serif;
-    font-size: 1.02rem;
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1.3;
     text-align: center;
     cursor: pointer;
+    border: 1.5px solid rgba(77,194,215,0.25);
+    border-radius: 14px;
+    background: transparent;
+    color: rgba(238,243,241,0.7);
     transition: all 0.2s ease;
   }
-  #slide-1 .control-remoto button {
-    border: 1.5px solid rgba(120,175,255,0.3);
-    border-radius: 14px;
-    background: rgba(50,90,180,0.12);
-    color: var(--ink-dim);
-  }
   #slide-1 .control-remoto button:hover {
-    border-color: rgba(150,200,255,0.65);
-    color: #fff;
+    border-color: rgba(77,194,215,0.55);
+    color: var(--ink);
     transform: translateY(-1px);
   }
   #slide-1 .control-remoto button.activo {
-    background: rgba(108,182,255,0.20);
+    background: rgba(77,194,215,0.14);
     border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 0 16px rgba(108,182,255,0.35);
+    color: var(--accent);
+    box-shadow: 0 0 14px rgba(77,194,215,0.25);
   }
 
-  /* Laptops ~1366–1600 px: columnas laterales más angostas para que la TV sea más grande */
-  @media (min-width: 1361px) and (max-width: 1600px) {
+  /* ═════════ ESCRITORIO: escenario 1920×1080 escalado ═════════ */
+  @media (min-width: 961px) {
     #slide-1 .panoramico-layout {
-      grid-template-columns: minmax(260px, 350px) minmax(0, 1fr) minmax(150px, 200px);
+      position: absolute;
+      left: 50%; top: 50%;
+      width: var(--s1w, 1920px);
+      height: var(--s1h, 1080px);
+      max-width: none;
+      padding: 40px 56px var(--s1pb, 112px);
+      transform: translate(-50%, -50%) scale(var(--s1k, 0.75));
+      grid-template-columns: 450px minmax(0, 1fr) 260px;
+      grid-template-rows: auto minmax(0, 1fr);
+      grid-auto-rows: auto;
+      column-gap: 36px;
+      row-gap: 0;
+      align-items: center;
+      align-content: stretch;
+      overflow: visible;
     }
-  }
 
-  /* ── Móvil / angosto: la TV sigue dividida izquierda|derecha, solo cambia su proporción ── */
-  @media (max-width: 960px) {
-    #slide-1 .panoramico-layout { grid-template-columns: minmax(0, 1fr); grid-auto-rows: max-content; align-content: start; }
-    #slide-1 .col-narrativa { min-height: max-content; }
-    #slide-1 .col-narrativa { flex-direction: column; gap: 0.6rem; }
-    #slide-1 .col-narrativa .bloque-leyenda { max-width: 100%; margin-top: 0; }
-    #slide-1 .slide-titulo-compact { font-size: clamp(1.6rem, 7vw, 2.2rem); }
-    #slide-1 .tv-container { width: 100%; max-width: 680px; aspect-ratio: 4 / 3; }
-    #slide-1 .control-remoto {
-      max-width: 100%; max-height: none;
-      justify-self: stretch;
-      flex-direction: row; flex-wrap: wrap;
+    /* Título grande, ocupando la parte alta */
+    #slide-1 .bloque-titulo { grid-column: 1 / -1; align-self: start; }
+    #slide-1 .paso-tag { font-size: 22px; margin-bottom: 14px; gap: 14px; }
+    #slide-1 .paso-tag::after { width: 64px; }
+    #slide-1 .slide-titulo-compact {
+      font-size: 108px;
+      line-height: 1.03;
+      letter-spacing: -0.025em;
     }
-    #slide-1 .control-remoto-titulo { width: 100%; }
-    #slide-1 .control-remoto button { flex: 1 1 140px; }
-  }
-  @media (max-width: 600px) {
-    #slide-1 .tv-container { aspect-ratio: 1 / 1.05; }
+
+    /* Leyenda: a la altura de la TV, pegada a ella */
+    #slide-1 .bloque-leyenda { align-self: center; justify-self: end; max-width: 450px; }
+    #slide-1 .leyenda-titulo { font-size: 16px; margin-bottom: 14px; }
+    #slide-1 .metricas-stack { gap: 14px; }
+    #slide-1 .metrica-card {
+      padding: 16px 20px;
+      border-radius: 18px;
+      gap: 14px;
+    }
+    #slide-1 .metrica-card .ico { font-size: 40px; }
+    #slide-1 .metrica-card .num { font-size: 34px; }
+    #slide-1 .metrica-card .lbl { font-size: 19px; line-height: 1.3; }
+
+    /* TV: tamaño de diseño; se limita por el alto disponible del escenario */
+    #slide-1 .tv-container {
+      width: min(100%, 1240px, calc((var(--s1h, 1080px) - var(--s1pb, 112px) - 340px) * 16 / 9));
+      max-width: none;
+      aspect-ratio: 16 / 9;
+    }
+
+    /* Control remoto a la derecha, a la altura de la TV */
+    #slide-1 .control-remoto {
+      align-self: center;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 14px;
+      padding: 22px 18px;
+      border-radius: 26px;
+    }
+    #slide-1 .control-remoto-titulo { font-size: 15px; margin-bottom: 4px; }
+    #slide-1 .control-remoto button {
+      flex: none;
+      font-size: 22px;
+      padding: 20px 12px;
+      border-radius: 16px;
+    }
   }
 
   /* ─── SLIDE 2: TERRITORIO (MAPAS SVG CHILE CON SONIDO) ─── */
@@ -1058,17 +1041,7 @@
       grid-template-columns: 1fr;
       overflow-y: auto;
     }
-    .col-narrativa, .mapas-col-info { height: auto; }
-    .col-narrativa {
-      display: flex;
-      max-width: 100%;
-    }
-    .col-narrativa .bloque-medio { display: none; }
-    .col-narrativa .bloque-leyenda {
-      max-width: 100%;
-      justify-self: stretch;
-      margin-top: 1rem;
-    }
+    .mapas-col-info { height: auto; }
     .mapas-col-canvas { height: 460px; }
     .slide {
       overflow-y: auto;
@@ -1079,24 +1052,6 @@
     .curiosidad-pregunta {
       white-space: normal;
       font-size: 0.8rem;
-    }
-    /* Slide 1 en móvil: título, TV y remoto apilados sin recortes */
-    #slide-1 {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-    #slide-1 .panoramico-layout {
-      grid-template-columns: 1fr;
-      max-width: 96vw;
-      align-items: start;
-      overflow-y: auto;
-    }
-    #slide-1 .col-narrativa {
-      max-width: 100%;
-      justify-self: stretch;
-    }
-    .col-narrativa .bloque-titulo {
-      margin-bottom: 1rem;
     }
     /* Dock lateral derecho: pegado a la esquina sin tapar contenido */
     #nav-flotante {
@@ -1149,40 +1104,38 @@
   <!-- ─── SLIDE 1: EL COSTO HÍDRICO (WIDESCREEN PANORÁMICO) ─── -->
   <section class="slide" id="slide-1" data-slide="1">
     <div class="panoramico-layout">
-      <!-- Columna izquierda: título arriba + leyenda abajo -->
-      <div class="col-narrativa">
-        <div class="bloque-titulo">
-          <span class="paso-tag">Paso 01 · La magnitud</span>
-          <h2 class="slide-titulo-compact">
-            ¿Cuánta agua cuesta<span class="salto"><em>producir una palta?</em></span>
-          </h2>
-        </div>
 
-        <div class="bloque-medio" aria-hidden="true"></div>
+      <!-- Título grande (arriba, ocupa todo el ancho) -->
+      <div class="bloque-titulo">
+        <span class="paso-tag">Paso 01 · La magnitud</span>
+        <h2 class="slide-titulo-compact">
+          ¿Cuánta agua cuesta<span class="salto"><em>producir una palta?</em></span>
+        </h2>
+      </div>
 
-        <div class="bloque-leyenda">
-          <div class="leyenda-titulo">📖 Leyenda · base del cálculo</div>
-          <div class="metricas-stack">
-            <div class="metrica-card">
-              <span class="ico">⚖️</span>
-              <span class="num">~1.100 L</span>
-              <span class="lbl">por kilo de palta (≈10 paltas)</span>
-            </div>
-            <div class="metrica-card verde">
-              <span class="ico">🥑</span>
-              <span class="num">100 L</span>
-              <span class="lbl">por 1 palta = 1 día de agua para 1 persona</span>
-            </div>
-            <div class="metrica-card naranja">
-              <span class="ico">🚰</span>
-              <span class="num">100 L/día</span>
-              <span class="lbl">ración legal mínima por persona en Chile</span>
-            </div>
+      <!-- Leyenda: a la altura de la TV -->
+      <div class="bloque-leyenda">
+        <div class="leyenda-titulo">📖 Leyenda · base del cálculo</div>
+        <div class="metricas-stack">
+          <div class="metrica-card">
+            <span class="ico">⚖️</span>
+            <span class="num">~1.100 L</span>
+            <span class="lbl">por kilo de palta (≈10 paltas)</span>
+          </div>
+          <div class="metrica-card verde">
+            <span class="ico">🥑</span>
+            <span class="num">100 L</span>
+            <span class="lbl">por 1 palta = 1 día de agua para 1 persona</span>
+          </div>
+          <div class="metrica-card naranja">
+            <span class="ico">🚰</span>
+            <span class="num">100 L/día</span>
+            <span class="lbl">ración legal mínima por persona en Chile</span>
           </div>
         </div>
       </div>
 
-      <!-- Columna centro: TV (izquierda = paltas | derecha = agua) -->
+      <!-- TV (izquierda = paltas | derecha = agua) -->
       <div class="tv-container" id="tv-container">
         <div class="tv-screen" aria-live="polite">
           <div class="tv-lado tv-lado-paltas">
@@ -1197,7 +1150,13 @@
           <div class="tv-divisor" aria-hidden="true"></div>
           <div class="tv-lado tv-lado-equiv">
             <span class="tv-tag tag-equiv">💧 Equivale a…</span>
-            <div class="tv-escena"><span class="tv-icono" id="tv-equiv-icon" aria-hidden="true">🧍</span></div>
+            <div class="tv-escena">
+              <div class="tv-escalera" id="tv-escalera" aria-hidden="true">
+                <div class="paso"><span class="e">🧍</span><small>1 persona</small></div>
+                <div class="paso"><span class="e">🏘️</span><small>un pueblo</small></div>
+                <div class="paso"><span class="e">🏙️</span><small>una ciudad</small></div>
+              </div>
+            </div>
             <div class="tv-bloque">
               <div class="tv-valor" id="tv-equiv-valor">1 día de agua</div>
               <div class="tv-sub" id="tv-equiv-desc">para 1 persona (ración diaria de 100 L)</div>
@@ -1208,12 +1167,12 @@
         <i class="tv-led" aria-hidden="true"></i>
       </div>
 
-      <!-- Columna derecha: control remoto (cambia lo que se ve en la TV) -->
+      <!-- Control remoto -->
       <aside class="control-remoto" aria-label="Control de cantidades">
         <div class="control-remoto-titulo">🎛️ Elige cantidad</div>
-        <button class="activo" data-escala="0" onclick="cambiarEscala(0)">🧍 1 palta</button>
-        <button data-escala="1" onclick="cambiarEscala(1)">🏘️ 1 tonelada</button>
-        <button data-escala="2" onclick="cambiarEscala(2)">🏘️🏘️🏘️ Chile 25–26</button>
+        <button class="activo" data-escala="0" onclick="cambiarEscala(0)">🥑 1 palta</button>
+        <button data-escala="1" onclick="cambiarEscala(1)">🚛 1 tonelada</button>
+        <button data-escala="2" onclick="cambiarEscala(2)">🚢 Chile 25–26</button>
       </aside>
     </div>
   </section>
@@ -1578,14 +1537,28 @@
     }
   };
 
+  /* ── Escala de la slide 1: escenario de diseño 1920×1080 ajustado a la ventana ── */
+  const escena1 = document.querySelector('#slide-1 .panoramico-layout');
+  function ajustarEscena1() {
+    if (!escena1) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    const k = Math.min(W / 1920, H / 1080);          // escala uniforme (sin deformar)
+    escena1.style.setProperty('--s1k', k.toFixed(4));
+    escena1.style.setProperty('--s1w', (W / k).toFixed(1) + 'px');   // el escenario rellena toda la ventana
+    escena1.style.setProperty('--s1h', (H / k).toFixed(1) + 'px');
+    escena1.style.setProperty('--s1pb', (112 / k).toFixed(1) + 'px'); // reserva fija (px reales) para el dock inferior
+  }
+  ajustarEscena1();
+  window.addEventListener('resize', ajustarEscena1);
+
   /* ── Control remoto → TV (slide 1) ── */
   const ESCALAS = [
     { num: '1', label: 'palta', avos: 1, avoSize: 'min(36cqh, 20cqw)', nota: '',
-      litros: 110, icon: '🧍', valor: '1 día de agua', desc: 'para 1 persona (ración diaria de 100 L)' },
+      litros: 110, valor: '1 día de agua', desc: 'para 1 persona (ración diaria de 100 L)' },
     { num: '≈10.000', label: 'paltas · 1 tonelada', avos: 40, avoSize: 'min(8.4cqh, 4.2cqw)', nota: 'Cada 🥑 ≈ 250 paltas',
-      litros: 1100000, icon: '🏘️', valor: '30 años de agua', desc: 'para 1 persona · o 1 día para Petorca entero' },
+      litros: 1100000, valor: '30 años de agua', desc: 'para 1 persona · o 1 día para Petorca entero' },
     { num: '~2.650', label: 'millones de paltas · cosecha 2025–26 (265 mil ton)', avos: 50, avoSize: 'min(7.4cqh, 3.7cqw)', nota: 'Cada 🥑 ≈ 53 millones de paltas',
-      litros: 291500000000, icon: '🏙️', valor: '12 meses de agua', desc: 'para todo Santiago' }
+      litros: 291500000000, valor: '12 meses de agua', desc: 'para todo Santiago' }
   ];
   const nf1 = (n) => n.toLocaleString('es-CL', { maximumFractionDigits: 1 });
   const fmtLitros = (l) => l >= 1e9 ? nf1(l / 1e9) + ' mil millones de litros'
@@ -1611,9 +1584,7 @@
     set('tv-litros-val', fmtLitros(d.litros));
     set('tv-equiv-valor', d.valor);
     set('tv-equiv-desc', d.desc);
-    const icon = $('tv-equiv-icon');
-    icon.textContent = d.icon;
-    icon.style.animation = 'none'; void icon.offsetWidth; icon.style.animation = '';
+    document.querySelectorAll('#tv-escalera .paso').forEach((p, i) => p.classList.toggle('activo', i === idx));
 
     const field = $('tv-avo-field');
     field.style.setProperty('--avo', d.avoSize);
