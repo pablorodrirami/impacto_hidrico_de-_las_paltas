@@ -16,21 +16,24 @@
     --palta-1: #4c6b2f;
     --palta-2: #8a9a3a;
     --palta-3: #c5d96a;
-    --bg: #0a1f2e;
-    --card: #0f2d3d;
-    --card2: #0c2030;
-    --ink: #e8f4f8;
-    --ink-dim: #6fa8bb;
-    --sep: rgba(77,194,215,0.12);
+    --bg: #071512;
+    --card: #0e2420;
+    --card2: #091714;
+    --ink: #eef3f1;
+    --ink-dim: rgba(238,243,241,0.68);
+    --sep: rgba(77,194,215,0.18);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body { height: 100%; }
+
   body {
-    background: var(--bg);
+    background: linear-gradient(145deg, #071512 0%, #0a1f1a 100%);
     color: var(--ink);
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    min-height: 100%;
   }
 
   /* ─── BURBUJAS ─── */
@@ -50,48 +53,46 @@
   /* ─── WRAP ─── */
   .wrap {
     position: relative; z-index: 1;
-    max-width: 960px; margin: 0 auto;
-    padding: 2rem 1.2rem 3rem;
+    max-width: 1300px; width: 100%; margin: 0 auto;
+    padding: 0;
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
-  /* ─── HEADER ─── */
-  .header {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-  .header h1 {
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: clamp(1.6rem, 4vw, 2.4rem);
-    color: var(--agua-3);
-    line-height: 1.2;
-    margin-bottom: .5rem;
-  }
-  .badge {
-    display: inline-flex; align-items: center; gap: .4rem;
-    background: rgba(77,194,215,0.1);
-    border: 1px solid rgba(77,194,215,0.25);
-    border-radius: 999px;
-    padding: .3rem .85rem;
-    font-size: .8rem;
-    color: var(--agua-3);
-    font-weight: 600;
-    letter-spacing: .02em;
-  }
-
-  /* ─── PANEL PRINCIPAL ─── */
+  /* ─── PANEL PRINCIPAL: panorámico, ancho y bajo ─── */
   .panel {
-    background: var(--card);
-    border-radius: 22px;
+    background: rgba(14,36,32,0.82);
+    border-radius: 20px;
     border: 1px solid var(--sep);
     overflow: hidden;
     box-shadow: 0 8px 48px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    height: 100%;
   }
 
-  /* ─── LAYOUT BIPARTITO ─── */
+  /* ─── LAYOUT TV: paltas | centro vital (sin botones internos) ─── */
   .bipart {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 380px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(1rem, 2.2vw, 2rem);
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+  }
+  .bipart .lado-paltas,
+  .bipart .lado-equiv {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
   /* TAGS DE COLUMNA */
@@ -99,13 +100,13 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
-    font-size: .75rem;
+    font-size: .72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .08em;
-    padding: .25rem .75rem;
+    padding: .2rem .7rem;
     border-radius: 999px;
-    margin-bottom: .75rem;
+    margin-bottom: .5rem;
   }
   .tag-palta {
     background: rgba(138,154,58,0.15);
@@ -118,55 +119,64 @@
     color: var(--agua-3);
   }
 
-  /* LADO IZQUIERDO — paltas */
+  /* LADO IZQUIERDO — paltas (tags pegados arriba, resto agrandado) */
   .lado-paltas {
     background: linear-gradient(160deg, rgba(76,107,47,0.18) 0%, rgba(13,59,74,0.12) 100%);
     border-right: 1px solid var(--sep);
-    padding: 1.6rem 1.4rem 1.4rem;
+    padding: clamp(0.6rem, 1.5vh, 1rem) clamp(0.8rem, 2vw, 1.4rem);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     position: relative;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
   }
+  .lado-paltas .lado-tag { align-self: flex-start; margin-bottom: 0.9rem; }
+  .lado-equiv .lado-tag { align-self: flex-start; margin-bottom: 0.9rem; }
   .lado-paltas .sector-num {
     font-family: 'Fraunces', Georgia, serif;
-    font-size: clamp(2rem, 5.5vw, 3.6rem);
+    font-size: clamp(2.6rem, 5.5vw, 5rem);
     color: var(--palta-3);
     line-height: 1;
     margin-bottom: .2rem;
     transition: all .3s cubic-bezier(.34,1.56,.64,1);
   }
   .lado-paltas .sector-label {
-    font-size: .78rem;
+    font-size: clamp(0.95rem, 1.6vw, 1.15rem);
     color: #8dae5a;
     font-weight: 600;
     letter-spacing: .06em;
     text-transform: uppercase;
-    margin-bottom: 1rem;
+    margin-bottom: .9rem;
     min-height: 1.2rem;
   }
 
-  /* Grid de emojis */
+  /* Grid de emojis (llena el ancho disponible) */
   .avo-field {
-    flex: 1;
     width: 100%;
+    max-width: 460px;
+    min-height: 0;
+    max-height: clamp(140px, 28vh, 250px);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 5px;
     overflow: hidden;
     position: relative;
+    margin: 0 auto;
   }
-  .avo-field.dense { gap: 1px; }
+  .avo-field.dense { gap: 3px; }
   .avo-emoji {
-    font-size: 1.4rem;
+    font-size: clamp(2.2rem, 5vh, 3.6rem);
     line-height: 1.15;
     animation: pop-in .25s ease backwards;
     display: inline-block;
   }
-  .avo-field.dense .avo-emoji { font-size: 1rem; }
-  .avo-field.very-dense .avo-emoji { font-size: .7rem; }
+  .avo-field.dense .avo-emoji { font-size: clamp(1.7rem, 3.8vh, 2.7rem); }
+  .avo-field.very-dense .avo-emoji { font-size: clamp(1.3rem, 2.8vh, 2rem); }
   @keyframes pop-in {
     from { transform: scale(0) rotate(-20deg); opacity: 0; }
     to   { transform: scale(1) rotate(0deg); opacity: 1; }
@@ -181,47 +191,52 @@
     pointer-events: none;
   }
 
-  /* LADO DERECHO — equivalencia */
+  /* LADO DERECHO — equivalencia (centro vital, protagonista) */
   .lado-equiv {
-    background: linear-gradient(160deg, rgba(13,59,74,0.18) 0%, rgba(31,122,140,0.1) 100%);
-    padding: 1.6rem 1.4rem 1.4rem;
+    background: linear-gradient(160deg, rgba(13,59,74,0.28) 0%, rgba(31,122,140,0.16) 100%);
+    padding: clamp(0.6rem, 1.5vh, 1rem) clamp(0.8rem, 2vw, 1.4rem);
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     text-align: center;
     position: relative;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* Equivalencia visual: Número y textos arriba */
   .equiv-valor {
     font-family: 'Fraunces', Georgia, serif;
-    font-size: clamp(1.8rem, 4.5vw, 2.7rem);
+    font-size: clamp(2.8rem, 5.8vw, 5.2rem);
+    font-weight: 700;
     color: var(--agua-3);
-    line-height: 1.1;
-    margin-bottom: .3rem;
+    line-height: 1.02;
+    margin-bottom: .35rem;
     transition: all .25s ease;
   }
   .equiv-desc {
-    font-size: .88rem;
-    color: var(--ink-dim);
-    font-weight: 500;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    color: var(--ink);
+    font-weight: 600;
     line-height: 1.4;
-    max-width: 30ch;
+    max-width: 32ch;
     margin: 0 auto;
   }
 
   /* Icono / Emoji en el centro */
   .equiv-visual {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem 0;
+    padding: .7rem 0 0;
   }
   .equiv-icon {
-    font-size: 4.8rem;
+    font-size: clamp(4.5rem, 9vw, 7.5rem);
     display: inline-block;
-    line-height: 1;
+    line-height: 1.15;
+    white-space: nowrap;
     filter: drop-shadow(0 6px 20px rgba(0,0,0,0.35));
     transition: transform .25s ease;
   }
@@ -229,144 +244,37 @@
     transform: scale(1.1) rotate(4deg);
   }
 
-  /* Cuadro de asignación legal — compacto con despliegue en hover */
-  .cuadro-ley {
-    margin-top: auto;
-    width: fit-content;
-    max-width: 320px;
-    padding: .32rem .75rem;
-    background: rgba(77,194,215,0.06);
-    border: 1px solid rgba(77,194,215,0.22);
-    border-radius: 999px;
-    font-size: .72rem;
-    color: #90b7c7;
-    cursor: pointer;
-    transition: all .28s cubic-bezier(.4, 0, .2, 1);
-    user-select: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  }
-  .cuadro-ley:hover,
-  .cuadro-ley:focus-within {
-    border-radius: 12px;
-    background: rgba(13,59,74,0.95);
-    border-color: rgba(77,194,215,0.5);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-    padding: .55rem .85rem;
-  }
-  .ley-resumen {
-    display: flex;
-    align-items: center;
-    gap: .4rem;
-  }
-  .ley-icon {
-    font-size: .95rem;
-  }
-  .ley-pill {
-    color: #92b8c7;
-    font-weight: 500;
-  }
-  .ley-pill strong {
-    color: var(--agua-4);
-    font-weight: 600;
-  }
-  .ley-info-icon {
-    font-size: .68rem;
-    color: var(--agua-3);
-    opacity: .8;
-    margin-left: .15rem;
-  }
-  .ley-detalle {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height .3s ease, opacity .25s ease, margin-top .25s ease, padding-top .25s ease;
-    margin-top: 0;
-    padding-top: 0;
-    font-size: .71rem;
-    color: #a4cddc;
-    line-height: 1.4;
-    text-align: left;
-  }
-  .cuadro-ley:hover .ley-detalle,
-  .cuadro-ley:focus-within .ley-detalle {
-    max-height: 80px;
-    opacity: 1;
-    margin-top: .4rem;
-    padding-top: .4rem;
-    border-top: 1px solid rgba(77,194,215,0.2);
-  }
-  .ley-detalle strong {
-    color: var(--agua-3);
-  }
-
-  /* ─── FILA DE LITROS ─── */
-  .litros-row {
-    border-top: 1px solid var(--sep);
-    padding: 1rem 1.4rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: .5rem;
-    background: rgba(13,59,74,0.35);
-  }
-  .litros-row .drop {
-    font-size: 1.3rem;
-    filter: drop-shadow(0 2px 6px rgba(77,194,215,0.3));
-  }
-  .litros-row .litros-val {
+  /* Mini fila de litros integrada bajo las paltas */
+  .litros-mini {
+    margin-top: .7rem;
     font-family: 'Fraunces', Georgia, serif;
-    font-size: 1.55rem;
+    font-size: clamp(1.1rem, 2.4vw, 1.8rem);
     font-weight: 700;
     color: var(--agua-3);
-  }
-  .litros-row .litros-label {
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 1.55rem;
-    font-weight: 500;
-    color: var(--agua-3);
-  }
-
-  /* ─── BOTONES DE ESCALA ─── */
-  .botones-wrap {
-    padding: 1.2rem 1rem 1.2rem;
-    border-top: 1px solid var(--sep);
-    background: var(--card2);
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    justify-content: center;
-  }
-  .scale-btn {
-    background: transparent;
-    border: 1.5px solid rgba(77,194,215,0.2);
-    border-radius: 10px;
-    padding: .45rem .9rem;
-    color: var(--ink-dim);
-    font-family: 'Inter', sans-serif;
-    font-size: .82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .2s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .scale-btn:hover {
-    border-color: rgba(77,194,215,0.5);
-    color: var(--ink);
-    transform: translateY(-1px);
-  }
-  .scale-btn.active {
-    background: rgba(77,194,215,0.12);
-    border-color: var(--agua-3);
-    color: var(--agua-3);
-    box-shadow: 0 0 12px rgba(77,194,215,0.2);
+    background: rgba(13,59,74,0.4);
+    border: 1px solid rgba(77,194,215,0.25);
+    border-radius: 999px;
+    padding: .4rem 1.1rem;
+    white-space: nowrap;
+    max-width: 100%;
   }
 
   /* ─── RESPONSIVE ─── */
-  @media (max-width: 540px) {
-    .bipart { grid-template-columns: 1fr; }
-    .lado-paltas { border-right: none; border-bottom: 1px solid var(--sep); min-height: 220px; }
-    .avo-emoji { font-size: 1.2rem; }
+  /* El iframe hereda el ancho del contenedor padre: usamos container queries
+     implícitas vía aspect-ratio + clamp para no deformar en pantallas chicas */
+  @media (max-width: 720px) {
+    .bipart { grid-template-columns: 1fr; overflow-y: auto; }
+    .lado-paltas { border-right: none; border-bottom: 1px solid var(--sep); }
+    .lado-equiv { border-bottom: none; }
+    .avo-emoji { font-size: clamp(0.9rem, 3vw, 1.2rem); }
+    .equiv-valor { font-size: clamp(1.8rem, 8vw, 2.4rem); }
+    .litros-mini { white-space: normal; text-align: center; }
+  }
+  /* Ventana del iframe angosta (el padre le da poco ancho): compactar */
+  @media (max-width: 560px) {
+    .lado-paltas .sector-num { font-size: clamp(1.4rem, 7vw, 2rem); }
+    .equiv-valor { font-size: clamp(1.5rem, 7vw, 2rem); }
+    .equiv-icon { font-size: clamp(2.2rem, 10vw, 3rem); }
   }
 </style>
 </head>
@@ -376,150 +284,84 @@
 
 <div class="wrap">
 
-  <!-- HEADER -->
-  <div class="header">
-    <h1>¿Cuánta agua hay en una palta? 🥑💧</h1>
-    <span class="badge">💡 1 kg de palta = 1.000 L de agua</span>
-  </div>
-
-  <!-- PANEL PRINCIPAL -->
+  <!-- PANEL PRINCIPAL TRIPARTITO -->
   <div class="panel">
 
-    <!-- BIPARTITO -->
+    <!-- TRIPARTITO: paltas | centro vital | botones -->
     <div class="bipart">
 
-      <!-- IZQUIERDA: paltas -->
+      <!-- IZQUIERDA: paltas en litros -->
       <div class="lado-paltas">
         <span class="lado-tag tag-palta">🥑 En paltas</span>
         <div class="sector-num" id="num-paltas">1</div>
         <div class="sector-label" id="label-paltas">palta</div>
         <div class="avo-field" id="avo-field"></div>
+        <div class="litros-mini">💧 <span id="litros-val">100 litros</span> de agua</div>
       </div>
 
-      <!-- DERECHA: equivalencia -->
+      <!-- CENTRO: información vital -->
       <div class="lado-equiv">
         <span class="lado-tag tag-equiv">💧 Equivale a...</span>
-        <div class="equiv-valor" id="equiv-valor">1 ración diaria</div>
-        <div class="equiv-desc" id="equiv-desc">de agua potable para 1 persona</div>
+        <div class="equiv-valor" id="equiv-valor">1 día de agua</div>
+        <div class="equiv-desc" id="equiv-desc">para 1 persona (ración diaria de 100 L)</div>
         <div class="equiv-visual">
-          <span class="equiv-icon" id="equiv-icon">👤</span>
-        </div>
-        <div class="cuadro-ley" tabindex="0">
-          <div class="ley-resumen">
-            <span class="ley-icon">⚖️</span>
-            <span class="ley-pill">Ración legal: <strong>100 L/día</strong></span>
-            <span class="ley-info-icon">ℹ️</span>
-          </div>
-          <div class="ley-detalle">
-            Por mandato judicial y Contraloría, la asignación mínima vital en Chile es de <strong>100 litros diarios por persona</strong>.
-          </div>
+          <span class="equiv-icon" id="equiv-icon">🧍</span>
         </div>
       </div>
 
     </div>
-
-    <!-- FILA LITROS -->
-    <div class="litros-row">
-      <span class="drop">💧</span>
-      <span class="litros-val" id="litros-val">100 litros</span>
-      <span class="litros-label">de agua</span>
-    </div>
-
-    <!-- BOTONES -->
-    <div class="botones-wrap" id="botones-wrap"></div>
 
   </div><!-- /panel -->
 
 </div><!-- /wrap -->
 
 <script>
-// ─── DATOS ──────────────────────────────────────────────────────
-// Estándar legal: 1 ración diaria = 100 L/día por persona (decretado por la Corte Suprema y Contraloría)
+// ─── DATOS (fuente única de verdad) ─────────────────────────────────
+// Base: ~1.100 L por kilo de palta (≈10 paltas de ~100 g) → 1 palta ≈ 110 L ≈ 1 ración diaria
+// Estándar legal: 1 ración diaria = 100 L/día por persona (Corte Suprema y Contraloría)
+// Requerimiento hídrico: ~1.100 m³ por tonelada de palta (coherente con mapa del proyecto)
+// → 1 palta ≈ 110 L ≈ 1 día de agua para 1 persona
+// → 1 ton = 1.100.000 L = 11.000 raciones = 11.000 días-persona ≈ 30 años para 1 persona
+//    ≈ 1 día de agua para un pueblo de ~11.000 personas (ej. Petorca, región de Valparaíso)
+// → Chile 2025-26: 265.000 ton (Diario Frutícola / Paltas de Chile)
+//    = 291.500.000 m³ = 2.915 millones de raciones ≈ 364 días ≈ 12 meses para Santiago RM (~8 M personas)
 
 const ESCALAS = [
   {
     key: "1palta",
-    btnLabel: "🥑 1 palta",
+    btnLabel: "🧍 1 palta",
     numPaltas: "1",
     labelPaltas: "palta (~100 g)",
-    litros: 100,
+    litros: 110,
     avos: 1,
     avoDense: false,
-    icon: "👤",
-    valor: "1 ración diaria",
-    desc: "de agua potable para 1 persona (100 L)"
-  },
-  {
-    key: "1kg",
-    btnLabel: "📦 1 kilo",
-    numPaltas: "≈10",
-    labelPaltas: "paltas (1 kilo)",
-    litros: 1000,
-    avos: 10,
-    avoDense: false,
-    icon: "🚰",
-    valor: "10 raciones diarias",
-    desc: "10 días de agua para 1 persona (o 10 personas por un día)"
-  },
-  {
-    key: "10kg",
-    btnLabel: "📦 10 kilos",
-    numPaltas: "≈100",
-    labelPaltas: "paltas (10 kilos)",
-    litros: 10000,
-    avos: 80,
-    avoDense: true,
-    icon: "🏘️",
-    valor: "100 raciones diarias",
-    desc: "100 días de agua para 1 persona (más de 3 meses)"
-  },
-  {
-    key: "100kg",
-    btnLabel: "📦 100 kilos",
-    numPaltas: "≈1.000",
-    labelPaltas: "paltas (100 kilos)",
-    litros: 100000,
-    avos: 200,
-    avoDense: true,
-    icon: "🏫",
-    valor: "1.000 raciones diarias",
-    desc: "agua potable para 1.000 personas por un día completo"
+    icon: "🧍",
+    valor: "1 día de agua",
+    desc: "para 1 persona (ración diaria de 100 L)"
   },
   {
     key: "1ton",
-    btnLabel: "🚛 1 tonelada",
+    btnLabel: "🏘️ 1 tonelada",
     numPaltas: "≈10.000",
     labelPaltas: "paltas (1 tonelada)",
-    litros: 1000000,
-    avos: 400,
+    litros: 1100000,
+    avos: 220,
     avoDense: true,
-    icon: "🏙️",
-    valor: "10.000 raciones diarias",
-    desc: "agua potable para una comunidad de 10.000 habitantes por un día"
-  },
-  {
-    key: "100ton",
-    btnLabel: "🚢 100 toneladas",
-    numPaltas: "~1 millón",
-    labelPaltas: "de paltas (100 toneladas)",
-    litros: 100000000,
-    avos: 600,
-    avoDense: true,
-    icon: "🌆",
-    valor: "1 millón de raciones",
-    desc: "de agua potable para 1 millón de personas por un día"
+    icon: "🏘️💧",
+    valor: "30 años de agua",
+    desc: "para 1 persona · o 1 día para Petorca entero"
   },
   {
     key: "265mil",
-    btnLabel: "🌎 Chile 2025–26",
+    btnLabel: "🏘️🏘️🏘️ Chile 25–26",
     numPaltas: "~2.650 millones",
-    labelPaltas: "de paltas producidas en Chile",
-    litros: 265000000000,
-    avos: 800,
+    labelPaltas: "de paltas (cosecha 2025–26 · 265 mil ton)",
+    litros: 291500000000,
+    avos: 300,
     avoDense: true,
-    icon: "🌎",
-    valor: "2.650 millones de raciones",
-    desc: "abastecería a todo Chile (20 millones de personas) por más de 4 meses"
+    icon: "🏘️🏘️🏘️",
+    valor: "12 meses de agua",
+    desc: "para todo Santiago"
   }
 ];
 
@@ -562,15 +404,10 @@ function renderAvos(count, dense) {
   requestAnimationFrame(addBatch);
 }
 
-// ─── RENDER ESCALA ───────────────────────────────────────────────
+// ─── RENDER ESCALA (la TV solo muestra; el remoto vive en el index padre) ──
 function setScale(idx) {
   current = idx;
   const d = ESCALAS[idx];
-
-  // Botones
-  document.querySelectorAll('.scale-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === idx);
-  });
 
   // Animar — ocultar durante transición para evitar flash
   const animIds = ['num-paltas','label-paltas',
@@ -601,18 +438,11 @@ function setScale(idx) {
   }, 160);
 }
 
-// ─── BUILD BOTONES ───────────────────────────────────────────────
-(function buildButtons() {
-  const wrap = document.getElementById('botones-wrap');
-  ESCALAS.forEach((d, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'scale-btn';
-    btn.textContent = d.btnLabel;
-    btn.dataset.idx = i;
-    btn.addEventListener('click', () => setScale(i));
-    wrap.appendChild(btn);
-  });
-})();
+// ─── CONTROL REMOTO EXTERNO (vive en index.html, fuera de la TV) ────
+window.addEventListener('message', function(e) {
+  const idx = e && e.data && e.data.escala;
+  if (typeof idx === 'number' && ESCALAS[idx]) setScale(idx);
+});
 
 // ─── BURBUJAS ───────────────────────────────────────────────────
 (function() {
@@ -629,14 +459,12 @@ function setScale(idx) {
 // ─── INIT ────────────────────────────────────────────────────────
 setScale(0);
 
-// altura al parent
-function notifyHeight() {
+// Retransmitir wheel al parent para que el scroll del mouse funcione sobre este iframe
+window.addEventListener('wheel', function(e) {
   if (window.parent !== window) {
-    window.parent.postMessage({ tipo: 'escala-altura', altura: document.body.scrollHeight }, '*');
+    window.parent.postMessage({ tipo: 'wheel-scroll', deltaY: e.deltaY }, '*');
   }
-}
-window.addEventListener('load', notifyHeight);
-new MutationObserver(notifyHeight).observe(document.body, { childList:true, subtree:true });
+}, { passive: true });
 </script>
 </body>
 </html>
