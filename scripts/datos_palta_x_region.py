@@ -57,7 +57,7 @@ datos_mapa['Agua_Total'] = datos_mapa['Palta_Producida'] * AGUA_POR_TON_PRODUCID
 datos_mapa['Palta_Exportada'] = datos_mapa['Palta_Producida'] * PORCENTAJE_EXPORTACION
 datos_mapa['Agua_Exportada'] = datos_mapa['Agua_Total'] * PORCENTAJE_EXPORTACION
 
-# --- 3. DISEÑO DE TEXTOS PARA LA CAJA FLOTANTE ---
+# --- 3. DISEÑO DE TEXTOS ESCALABLES (USANDO CLAMP) ---
 textos_panel = []
 for idx, row in datos_mapa.iterrows():
     reg = row['Region_std']
@@ -66,8 +66,8 @@ for idx, row in datos_mapa.iterrows():
     
     if round(palta) == 0:
         texto = (
-            f"<h2 style='color: #4dc2d7; margin-top:0; font-size: 2.8rem; font-family: Fraunces, serif;'>{reg}</h2>"
-            f"<h3 style='color: #ffffff; font-size: 1.8rem;'>Sin palto en el catastro</h3>"
+            f"<h2 style='color: #4dc2d7; margin-top:0; font-size: clamp(2rem, 3vw, 2.8rem); font-family: Fraunces, serif;'>{reg}</h2>"
+            f"<h3 style='color: #ffffff; font-size: clamp(1.2rem, 2vw, 1.8rem);'>Sin palto en el catastro</h3>"
         )
     else:
         agua_str = f"{agua:,.0f}".replace(',', '.')
@@ -77,16 +77,16 @@ for idx, row in datos_mapa.iterrows():
         factor_str = f"{AGUA_POR_TON_PRODUCIDA:,.0f}".replace(',', '.')
         
         texto = (
-            f"<h2 style='color: #4dc2d7; margin-top:0; font-size: 3rem; margin-bottom: 0.5rem; font-family: Fraunces, serif;'>{reg}</h2>"
-            f"<div style='background: rgba(14, 21, 19, 0.6); padding: 1.8rem; border-radius: 12px; margin-bottom: 1.8rem; border: 1px solid rgba(77, 194, 215, 0.2);'>"
-            f"  <span style='font-size: 1.2rem; color: #8a9ba8; text-transform: uppercase; letter-spacing: 1px;'>Agua total en producción:</span><br>"
-            f"  <span style='font-size: 3.5rem; color: #ffffff; font-weight: bold;'>{agua_str} <span style='font-size: 1.5rem; color: #4dc2d7;'>m³</span></span>"
+            f"<h2 style='color: #4dc2d7; margin-top:0; font-size: clamp(2rem, 3vw, 3rem); margin-bottom: 0.5rem; font-family: Fraunces, serif;'>{reg}</h2>"
+            f"<div style='background: rgba(14, 21, 19, 0.6); padding: clamp(1rem, 2vw, 1.8rem); border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid rgba(77, 194, 215, 0.2);'>"
+            f"  <span style='font-size: clamp(0.9rem, 1vw, 1.2rem); color: #8a9ba8; text-transform: uppercase; letter-spacing: 1px;'>Agua total en producción:</span><br>"
+            f"  <span style='font-size: clamp(2.2rem, 3.5vw, 3.5rem); color: #ffffff; font-weight: bold;'>{agua_str} <span style='font-size: clamp(1rem, 1.5vw, 1.5rem); color: #4dc2d7;'>m³</span></span>"
             f"</div>"
-            f"<ul style='color: #eef3f1; font-size: 1.3rem; line-height: 2.2; list-style-type: none; padding: 0; margin: 0;'>"
-            f"  <li style='border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.6rem; margin-bottom: 0.6rem;'><span style='color: #8a9ba8'>Req. hídrico:</span> <b>{factor_str} m³/ton</b></li>"
-            f"  <li style='border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.6rem; margin-bottom: 0.6rem;'><span style='color: #8a9ba8'>Palta producida:</span> <b>{palta_str} ton</b></li>"
-            f"  <li style='border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.6rem; margin-bottom: 0.6rem;'><span style='color: #8a9ba8'>Exportada (55%):</span> <b>{exp_palta_str} ton</b></li>"
-            f"  <li style='color: #4dc2d7; font-size: 1.4rem; padding-top: 0.6rem;'><span style='color: #eef3f1'>Agua exportada:</span> <b>{exp_agua_str} m³</b></li>"
+            f"<ul style='color: #eef3f1; font-size: clamp(1rem, 1.2vw, 1.3rem); line-height: 2; list-style-type: none; padding: 0; margin: 0;'>"
+            f"  <li style='border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem;'><span style='color: #8a9ba8'>Req. hídrico:</span> <b>{factor_str} m³/ton</b></li>"
+            f"  <li style='border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem;'><span style='color: #8a9ba8'>Palta producida:</span> <b>{palta_str} ton</b></li>"
+            f"  <li style='border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem;'><span style='color: #8a9ba8'>Exportada (55%):</span> <b>{exp_palta_str} ton</b></li>"
+            f"  <li style='color: #4dc2d7; font-size: clamp(1.1rem, 1.4vw, 1.4rem); padding-top: 0.5rem;'><span style='color: #eef3f1'>Agua exportada:</span> <b>{exp_agua_str} m³</b></li>"
             f"</ul>"
         )
     textos_panel.append(texto)
@@ -107,7 +107,6 @@ fig = go.Figure(go.Choropleth(
     marker_line_width=0.8,
     customdata=datos_mapa[['panel_html']], 
     hoverinfo="none", 
-    # BARRA CONFIGURADA CON TU NÚMERO
     colorbar=dict(
         title="<span style='font-size: 13px; color: #8a9ba8;'>Volumen m³<br> </span>", 
         thickness=12, 
@@ -128,14 +127,14 @@ fig.update_geos(
     visible=False, projection_type="mercator", bgcolor=COLORES_BASE['fondo']
 )
 
-# MAPA CONFIGURADO CON TU NÚMERO
 fig.update_layout(
+    autosize=True,
     margin={"r":0,"t":10,"l":0,"b":10}, 
     paper_bgcolor=COLORES_BASE['fondo'], plot_bgcolor=COLORES_BASE['fondo'], dragmode=False,
     geo=dict(domain=dict(x=[0.05, 0.50], y=[0, 1.0])) 
 )
 
-# --- 5. INYECCIÓN DEL DISEÑO CON JS CORREGIDO ---
+# --- 5. INYECCIÓN DEL DISEÑO CON CSS ESCALABLE ---
 html_base = fig.to_html(full_html=True, include_plotlyjs='cdn', div_id='mi-mapa-plotly')
 
 css_inyectado = f"""
@@ -148,21 +147,31 @@ css_inyectado = f"""
         transition: opacity 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease !important;
     }}
 
+    /* CAJA FLOTANTE ESCALABLE */
     #caja-flotante {{
-        position: absolute; right: 15%; top: 50%; transform: translateY(-50%);
-        width: 480px;
+        position: absolute; 
+        right: clamp(2%, 10vw, 15%); /* Se ajusta inteligentemente al borde */
+        top: 50%; transform: translateY(-50%);
+        width: clamp(300px, 32vw, 480px); /* Nunca será muy chica ni muy grande */
         background-color: rgba(21, 34, 32, 0.85);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(77, 194, 215, 0.3);
         border-radius: 16px;
-        padding: 3rem;
+        padding: clamp(1.5rem, 2.5vw, 3rem); /* El padding interior también se encoge */
         box-sizing: border-box;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         pointer-events: none;
         z-index: 10;
         transition: all 0.3s ease;
     }}
-    .instruccion {{ color: #8a9ba8; text-align: center; font-size: 1.3rem; border: 2px dashed #1f3a35; padding: 2.5rem; border-radius: 10px; }}
+    .instruccion {{ 
+        color: #8a9ba8; 
+        text-align: center; 
+        font-size: clamp(1rem, 1.2vw, 1.3rem); 
+        border: 2px dashed #1f3a35; 
+        padding: clamp(1.5rem, 2vw, 2.5rem); 
+        border-radius: 10px; 
+    }}
 </style>
 """
 
@@ -175,6 +184,23 @@ html_panel = """
     </div>
 </div>
 <script>
+    let resizeTimer;
+    function forzarAjuste() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            var miMapa = document.getElementById('mi-mapa-plotly');
+            if (miMapa) {
+                Plotly.relayout(miMapa, {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+            }
+        }, 300); 
+    }
+    
+    window.addEventListener('resize', forzarAjuste);
+    document.addEventListener('fullscreenchange', forzarAjuste);
+
     var chequeo = setInterval(function() {
         var miMapa = document.getElementById('mi-mapa-plotly');
         if (miMapa && miMapa.on) {
@@ -187,7 +213,6 @@ html_panel = """
                     var index = pt.pointIndex !== undefined ? pt.pointIndex : pt.pointNumber;
                     var paths = document.querySelectorAll('g.choroplethlayer path');
                     
-                    // ¡EL ARREGLO!: Les pegamos una etiqueta permanente la primera vez que pasas el mouse
                     if (!miMapa.dataset.etiquetado) {
                         paths.forEach(function(p, i) {
                             p.setAttribute('data-indice-original', i);
@@ -198,14 +223,13 @@ html_panel = """
                     infoBox.innerHTML = pt.customdata[0];
                     
                     paths.forEach(function(p) {
-                        // Ahora leemos la etiqueta fija en vez de la posición que cambia
                         var origIndex = parseInt(p.getAttribute('data-indice-original'));
                         
                         if(origIndex === index) {
                             p.style.setProperty('stroke', '#ffffff', 'important');
                             p.style.setProperty('stroke-width', '3px', 'important');
                             p.style.setProperty('opacity', '1', 'important');
-                            p.parentNode.appendChild(p); // Ahora sí podemos traerla al frente sin romper nada
+                            p.parentNode.appendChild(p);
                         } else {
                             p.style.setProperty('opacity', '0.25', 'important');
                             p.style.setProperty('stroke', '#1f3a35', 'important');
@@ -234,4 +258,4 @@ html_final = html_final.replace('</body>', html_panel + '</body>')
 with open(ruta_html, 'w', encoding='utf-8') as f:
     f.write(html_final)
 
-print(f"✅ ¡Error corregido! Ahora el reflector seguirá iluminando exactamente la región donde tienes el cursor.")
+print(f"✅ Ajuste escalable completado: La caja y los textos ahora se adaptan al tamaño de la pantalla.")
