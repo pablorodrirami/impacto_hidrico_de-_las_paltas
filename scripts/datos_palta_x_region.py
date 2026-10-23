@@ -152,9 +152,12 @@ css_inyectado = f"""
 
     #caja-flotante {{
         position: absolute; 
-        right: clamp(2%, 10vw, 15%);
+        right: clamp(5%, 10vw, 15%);
         top: 50%; transform: translateY(-50%);
-        width: clamp(300px, 32vw, 480px);
+        width: clamp(280px, 30vw, 480px); /* Ajustamos el mínimo por si la pantalla es muy angosta */
+        max-width: 90vw; /* Seguridad: jamás será más ancha que la pantalla de ellos */
+        max-height: 90vh; /* Seguridad: jamás será más alta que la pantalla de ellos */
+        overflow-y: auto; /* Si su pantalla es diminuta, aparecerá un scroll en vez de cortar el texto */
         background-color: rgba(21, 34, 32, 0.85);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(77, 194, 215, 0.3);
@@ -166,6 +169,11 @@ css_inyectado = f"""
         z-index: 10;
         transition: all 0.3s ease;
     }}
+    
+    /* Pequeño ajuste para esconder el scrollbar visualmente pero mantener la función */
+    #caja-flotante::-webkit-scrollbar {{ width: 6px; }}
+    #caja-flotante::-webkit-scrollbar-thumb {{ background: rgba(77, 194, 215, 0.3); border-radius: 4px; }}
+    
     .instruccion {{ 
         color: #8a9ba8; 
         text-align: center; 
