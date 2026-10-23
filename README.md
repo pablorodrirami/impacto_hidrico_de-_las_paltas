@@ -5,8 +5,8 @@ Proyecto de visualización de datos y narrativa interactiva para la web (GitHub 
 ---
 
 ## 👥 Integrantes del Proyecto
-- **Pablo**
-- **Alonso**
-- **Boris**
+- **Pablo Rodriguez**
+- **Alonso Aqueveque**
+- **Boris Antillanca**
 
 ---
