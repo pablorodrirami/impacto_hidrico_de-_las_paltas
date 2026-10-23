@@ -57,7 +57,7 @@ datos_mapa['Agua_Total'] = datos_mapa['Palta_Producida'] * AGUA_POR_TON_PRODUCID
 datos_mapa['Palta_Exportada'] = datos_mapa['Palta_Producida'] * PORCENTAJE_EXPORTACION
 datos_mapa['Agua_Exportada'] = datos_mapa['Agua_Total'] * PORCENTAJE_EXPORTACION
 
-# --- 3. DISEÑO DE TEXTOS ESCALABLES (USANDO CLAMP) ---
+# --- 3. DISEÑO DE TEXTOS ESCALABLES ---
 textos_panel = []
 for idx, row in datos_mapa.iterrows():
     reg = row['Region_std']
@@ -120,13 +120,15 @@ fig = go.Figure(go.Choropleth(
     )
 ))
 
+# RESTAURADO: Coordenadas exactas que tenías calibradas
 fig.update_geos(
     fitbounds=False, 
-    lataxis_range=[-37.8, -17.5], 
-    lonaxis_range=[-72.8, -67.2], 
+    lataxis_range=[-38.5, -16.5],  # Le di más margen arriba y abajo
+    lonaxis_range=[-74.0, -66.0],  # Lo ensanché para que no corte ninguna región por los lados
     visible=False, projection_type="mercator", bgcolor=COLORES_BASE['fondo']
 )
 
+# RESTAURADO: Posición exacta del mapa (0.05 a 0.50)
 fig.update_layout(
     autosize=True,
     margin={"r":0,"t":10,"l":0,"b":10}, 
@@ -137,27 +139,27 @@ fig.update_layout(
 # --- 5. INYECCIÓN DEL DISEÑO CON CSS ESCALABLE ---
 html_base = fig.to_html(full_html=True, include_plotlyjs='cdn', div_id='mi-mapa-plotly')
 
+# 100% en vez de 100vw/vh para que no se rebalse en la web de Boris
 css_inyectado = f"""
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
-    body {{ margin: 0; padding: 0; background-color: {COLORES_BASE['fondo']}; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; }}
-    #mi-mapa-plotly {{ width: 100vw !important; height: 100vh !important; position: absolute; left: 0; top: 0; }}
+    body {{ margin: 0; padding: 0; background-color: {COLORES_BASE['fondo']}; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; width: 100%; height: 100vh; }}
+    #mi-mapa-plotly {{ width: 100% !important; height: 100% !important; position: absolute; left: 0; top: 0; }}
     
     g.choroplethlayer path {{
         transition: opacity 0.3s ease, stroke-width 0.3s ease, stroke 0.3s ease !important;
     }}
 
-    /* CAJA FLOTANTE ESCALABLE */
     #caja-flotante {{
         position: absolute; 
-        right: clamp(2%, 10vw, 15%); /* Se ajusta inteligentemente al borde */
+        right: clamp(2%, 10vw, 15%);
         top: 50%; transform: translateY(-50%);
-        width: clamp(300px, 32vw, 480px); /* Nunca será muy chica ni muy grande */
+        width: clamp(300px, 32vw, 480px);
         background-color: rgba(21, 34, 32, 0.85);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(77, 194, 215, 0.3);
         border-radius: 16px;
-        padding: clamp(1.5rem, 2.5vw, 3rem); /* El padding interior también se encoge */
+        padding: clamp(1.5rem, 2.5vw, 3rem);
         box-sizing: border-box;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         pointer-events: none;
@@ -191,8 +193,8 @@ html_panel = """
             var miMapa = document.getElementById('mi-mapa-plotly');
             if (miMapa) {
                 Plotly.relayout(miMapa, {
-                    width: window.innerWidth,
-                    height: window.innerHeight
+                    width: document.body.clientWidth,
+                    height: document.body.clientHeight
                 });
             }
         }, 300); 
@@ -257,5 +259,3 @@ html_final = html_final.replace('</body>', html_panel + '</body>')
 
 with open(ruta_html, 'w', encoding='utf-8') as f:
     f.write(html_final)
-
-print(f"✅ Ajuste escalable completado: La caja y los textos ahora se adaptan al tamaño de la pantalla.")
