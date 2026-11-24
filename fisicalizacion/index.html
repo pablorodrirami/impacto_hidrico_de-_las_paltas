@@ -204,7 +204,10 @@
       principal.classList.toggle("regando", e.bomba);
       caja.classList.toggle("regando", e.bomba);
       document.querySelector(".estado").classList.toggle("regando", e.bomba);
-      document.getElementById("textoEstado").textContent = e.bomba ? "Bombeando agua" : "Bomba en reposo";
+      document.getElementById("textoEstado").textContent =
+        e.camara === false ? "Reconectando la cámara…" :
+        e.arduino === false ? "Reconectando con el Arduino…" :
+        e.bomba ? "Bombeando agua" : "Bomba en reposo";
     } catch (err) {
       document.getElementById("textoEstado").textContent = "Sin conexión con el programa de la cámara";
     }

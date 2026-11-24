@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Cuánta agua cuesta una palta?</title>
+<!--
+  TODO EN UNA PÁGINA: cámara + detección de paltas + bomba por USB (Web Serial).
+  No necesita Python, servidor ni IP Webcam.
+
+  Cómo usarla:
+  1. Ábrela en Chrome o Edge desde una dirección segura (https://, por ejemplo GitHub Pages,
+     o http://localhost). Web Serial y la cámara no funcionan en otras direcciones.
+  2. Cámara: cualquier webcam, o el celular como "cámara conectada" de Windows 11
+     (Configuración > Bluetooth y dispositivos > Dispositivos móviles).
+  3. Pulsa "Conectar Arduino" una sola vez y elige el puerto. Después se reconecta solo,
+     también al recargar la página o al desenchufar y volver a enchufar el USB.
+  4. Teclas: A = ajustes · R = vaciar vaso (reiniciar nivel) · F = pantalla completa.
+
+  El Arduino usa el mismo bomba_palta.ino: recibe '1' / '0' y apaga la bomba si pasa 1 s sin datos.
+  Cierra el Monitor Serie del Arduino IDE (y test.py) antes: un puerto solo lo puede usar un programa.
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+  :root {
+    --fondo-1: #0c211b;
+    --fondo-2: #143a2e;
+    --crema: #eef3df;
+    --palta: #c3dc77;
+    --piel: #2f5d3a;
+    --carne: #cfe58a;
+    --carozo: #8a5a33;
+    --agua-1: #6fd0f2;
+    --agua-2: #2a8cbd;
+    --vidrio: rgba(238, 243, 223, .5);
+    --alerta: #f2b56f;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    color: var(--crema);
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    background: radial-gradient(120% 90% at 75% 10%, var(--fondo-2), var(--fondo-1) 70%);
+    display: grid; grid-template-columns: minmax(280px, 38%) 1fr;
+    gap: 7vw; align-items: center; padding: 4vh 7vw; overflow: hidden;
+  }
+
+  /* ---------- VASO ---------- */
+  .vaso-caja { position: relative; height: 86vh; max-height: 780px; width: min(100%, 320px); justify-self: center; }
+  .vaso {
+    position: absolute; inset: 0 0 0 78px; overflow: hidden;
+    border: 4px solid var(--vidrio); border-top-color: transparent;
+    border-radius: 0 0 36px 36px; background: linear-gradient(90deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    box-shadow: inset 0 0 40px rgba(0,0,0,.25), 0 30px 60px rgba(0,0,0,.35);
+  }
+  .vaso::after {
+    content: ""; position: absolute; top: 4%; bottom: 8%; left: 10%; width: 7%;
+    background: linear-gradient(rgba(255,255,255,.28), rgba(255,255,255,0)); border-radius: 20px; pointer-events: none;
+  }
+  .agua {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 0%;
+    background: linear-gradient(var(--agua-1), var(--agua-2));
+    transition: height .3s linear;
+  }
+  .ola {
+    position: absolute; left: 0; right: 0; top: -14px; height: 16px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 16'%3E%3Cpath d='M0 16 V8 Q20 0 40 8 T80 8 V16Z' fill='%236fd0f2'/%3E%3C/svg%3E") repeat-x;
+    background-size: 80px 16px; animation: ola 3s linear infinite;
+  }
+  .burbuja {
+    position: absolute; bottom: 0; width: 9px; height: 9px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.7); opacity: 0; animation: sube 2.4s ease-in infinite; animation-play-state: paused;
+  }
+  .regando .burbuja { animation-play-state: running; }
+  .burbuja:nth-child(1) { left: 20%; } .burbuja:nth-child(2) { left: 50%; animation-delay: .8s; } .burbuja:nth-child(3) { left: 75%; animation-delay: 1.5s; }
+  @keyframes ola { to { background-position-x: 80px; } }
+  @keyframes sube { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .9; } 100% { transform: translateY(-260px); opacity: 0; } }
+
+  .marca { position: absolute; left: 0; width: 70px; text-align: right; transform: translateY(50%); font-size: .85rem; opacity: .85; }
+  .marca b { display: block; font-size: .7rem; font-weight: 400; opacity: .7; margin-bottom: -2px; }
+  .marca::after { content: ""; position: absolute; left: 74px; width: 12px; top: 50%; border-top: 2px solid var(--vidrio); }
+
+  /* ---------- TEXTO ---------- */
+  h1 { font-size: clamp(1.1rem, 2.2vw, 1.6rem); font-weight: 400; opacity: .8; margin-bottom: 3vh; }
+  .paltas-fila { display: flex; align-items: flex-end; gap: 3vw; flex-wrap: wrap; }
+  .numero { font-size: clamp(6rem, 17vw, 14rem); font-weight: 800; line-height: .85; letter-spacing: -.05em; color: var(--palta); }
+  .iconos { display: flex; flex-wrap: wrap; gap: 6px; max-width: 360px; padding-bottom: .6em; }
+  .iconos svg { width: clamp(30px, 4vw, 46px); height: auto; animation: pop .35s ease-out; }
+  .iconos .fantasma { opacity: .18; animation: none; }
+  .iconos .mas { align-self: center; font-weight: 600; font-size: 1.2rem; }
+  @keyframes pop { from { transform: scale(.3); opacity: 0; } }
+
+  .real { margin-top: 4vh; font-size: clamp(2.2rem, 5.2vw, 4.4rem); font-weight: 600; line-height: 1.05; }
+  .real span { color: var(--agua-1); font-weight: 800; }
+  .detalle { margin-top: 1.6vh; font-size: 1.1rem; line-height: 1.5; max-width: 38ch; opacity: .85; }
+
+  .pie { margin-top: 5vh; display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+  .estado {
+    display: inline-flex; align-items: center; gap: .6em; padding: .5em 1em; border-radius: 99px;
+    background: rgba(255,255,255,.08); font-size: .95rem;
+  }
+  .punto { width: 10px; height: 10px; border-radius: 50%; background: #738579; }
+  .regando .punto { background: var(--agua-1); animation: latido 1s ease-in-out infinite; }
+  .estado.problema .punto { background: var(--alerta); animation: latido 1.4s ease-in-out infinite; }
+  @keyframes latido { 50% { transform: scale(1.7); opacity: .5; } }
+  .boton {
+    font: inherit; font-size: .9rem; color: var(--crema); background: none; cursor: pointer;
+    border: 1px solid var(--vidrio); border-radius: 99px; padding: .5em 1em;
+  }
+  .boton:hover { background: rgba(255,255,255,.1); }
+  .boton.fuerte { border-color: var(--alerta); color: var(--alerta); }
+  [hidden] { display: none !important; }
+
+  /* ---------- PANEL DE AJUSTES (tecla A) ---------- */
+  #abrirAjustes { position: fixed; right: 14px; bottom: 14px; opacity: .25; font-size: .8rem; }
+  #abrirAjustes:hover { opacity: 1; }
+  #panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw); overflow-y: auto;
+    background: rgba(8, 24, 19, .96); border-left: 1px solid rgba(238,243,223,.15);
+    padding: 18px 18px 30px; font-size: .9rem; z-index: 10; box-shadow: -20px 0 40px rgba(0,0,0,.4);
+  }
+  #panel h2 { font-size: 1.2rem; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  #panel h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin: 18px 0 8px; font-weight: 600; }
+  #panel canvas { width: 100%; display: block; border-radius: 8px; background: #000; margin-bottom: 8px; }
+  #panel select { width: 100%; font: inherit; padding: .4em; border-radius: 8px; background: #143a2e; color: var(--crema); border: 1px solid var(--vidrio); }
+  #panel label { display: block; margin: 10px 0 2px; }
+  #panel label span { float: right; font-variant-numeric: tabular-nums; color: var(--palta); }
+  #panel input[type=range] { width: 100%; accent-color: var(--palta); }
+  #panel .fila { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  #panel .info { opacity: .75; line-height: 1.45; margin-top: 4px; }
+  #panel .ayuda { opacity: .6; line-height: 1.5; margin-top: 18px; font-size: .82rem; }
+  #panel kbd { border: 1px solid var(--vidrio); border-radius: 4px; padding: 0 .35em; font: inherit; }
+
+  /* el video tiene que estar en pantalla (no display:none) para que el navegador lo siga decodificando */
+  #video { position: fixed; left: 0; top: 0; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  @media (max-width: 760px) { body { grid-template-columns: 1fr; gap: 3vh; overflow: auto; } .vaso-caja { height: 44vh; } }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="palta" viewBox="0 0 60 80">
+      <path d="M30 3C42 3 46 21 52 39C58 57 46 77 30 77C14 77 2 57 8 39C14 21 18 3 30 3Z" fill="var(--piel)"/>
+      <path d="M30 11C39 11 42 26 47 40C52 55 43 69 30 69C17 69 8 55 13 40C18 26 21 11 30 11Z" fill="var(--carne)"/>
+      <circle cx="30" cy="50" r="10" fill="var(--carozo)"/>
+    </symbol>
+  </svg>
+
+  <video id="video" playsinline muted autoplay></video>
+
+  <div class="vaso-caja" id="caja" aria-hidden="true">
+    <div class="vaso">
+      <div class="agua" id="agua">
+        <div class="ola"></div>
+        <div class="burbuja"></div><div class="burbuja"></div><div class="burbuja"></div>
+      </div>
+    </div>
+  </div>
+
+  <main id="principal">
+    <h1>¿Cuánta agua cuesta una palta?</h1>
+    <div class="paltas-fila">
+      <div class="numero" id="paltas">0</div>
+      <div class="iconos" id="iconos"></div>
+    </div>
+    <div class="real"><span id="litros">0</span> litros de agua reales</div>
+    <p class="detalle" id="detalle">Pon paltas frente a la cámara.</p>
+    <div class="pie">
+      <div class="estado" id="estado"><span class="punto"></span><span id="textoEstado">Iniciando…</span></div>
+      <button class="boton" id="sonido">Activar sonido</button>
+      <button class="boton fuerte" id="conectarPie" hidden>Conectar Arduino</button>
+    </div>
+  </main>
+
+  <button class="boton" id="abrirAjustes" title="Ajustes (tecla A)">Ajustes</button>
+
+  <aside id="panel" hidden>
+    <h2>Ajustes <button class="boton" id="cerrarAjustes">Cerrar</button></h2>
+
+    <h3>Cámara</h3>
+    <select id="camaras"><option value="">(cámara por defecto)</option></select>
+    <p class="info" id="infoCamara">—</p>
+
+    <h3>Arduino</h3>
+    <div class="fila">
+      <button class="boton fuerte" id="conectar">Conectar Arduino</button>
+      <button class="boton" id="olvidar" title="Quita el permiso del puerto para elegir otro">Olvidar puerto</button>
+    </div>
+    <p class="info" id="infoArduino">—</p>
+
+    <h3>Lo que ve la cámara</h3>
+    <canvas id="vista"></canvas>
+    <canvas id="mascara"></canvas>
+    <p class="info" id="infoDeteccion">—</p>
+
+    <h3>Detección</h3>
+    <label>Oscuridad (sube = detecta más) <span id="vOsc"></span></label>
+    <input type="range" id="osc" min="0" max="255" value="30">
+    <label>Color (sube = detecta menos) <span id="vCol"></span></label>
+    <input type="range" id="col" min="0" max="255" value="90">
+    <label>Tamaño mínimo (sube = ignora chicos) <span id="vTam"></span></label>
+    <input type="range" id="tam" min="0" max="30000" step="50" value="3000">
+
+    <div class="fila">
+      <button class="boton" id="vaciar">Vaciar vaso (R)</button>
+      <button class="boton" id="completa">Pantalla completa (F)</button>
+    </div>
+    <p class="ayuda">
+      <kbd>A</kbd> abre/cierra este panel · <kbd>R</kbd> reinicia el nivel a 0 (después de vaciar el tupper a mano) ·
+      <kbd>F</kbd> pantalla completa. Los ajustes se guardan en este navegador.<br><br>
+      Tamaño mínimo está en píxeles de la imagen procesada (640 px de ancho).
+    </p>
+  </aside>
+
+<script>
+// ===================== CONFIGURACIÓN (igual que en test.py) =====================
+const ML_POR_PALTA = 110;       // 1 palta = 110 mL de agua en el vaso
+const L_REALES_POR_PALTA = 110; // ...que representan 110 L reales
+const CAUDAL_ML_S = 25;         // IMPORTANTE: caudal REAL de tu bomba en mL/s
+const CAPACIDAD = 1000;         // mL que caben en el tupper
+const L_POR_DUCHA = 60;         // litros de una ducha de ~5 min (verifica y cita tu fuente)
+const MARGEN = 30;              // px del borde que se ignoran
+const MODO_SIN_ARDUINO = false; // true = el vaso de la pantalla se llena aunque no haya Arduino (para probar)
+
+const ANCHO_PROCESO = 640;      // la imagen se analiza a este ancho
+const CUADROS_POR_SEG = 15;     // cuántas veces por segundo se analiza
+const ENVIO_MS = 200;           // cada cuánto se le habla al Arduino (su watchdog corta a 1 s)
+const ORDEN_VIGENTE_MS = 1000;  // si la detección se detiene más que esto, la bomba se apaga
+const MAX_ICONOS = 8;
+// ================================================================================
+
+const $ = (id) => document.getElementById(id);
+const guardar = (k, v) => { try { localStorage.setItem("palta." + k, JSON.stringify(v)); } catch (e) {} };
+const leer = (k, def) => { try { const v = localStorage.getItem("palta." + k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } };
+
+// ---------------------------------------------------------------- estado general
+let nivel = 0, paltas = 0, paltasAntes = -1;
+let deseoBomba = false, ultimaOrden = 0, bombaFluye = false;
+const historial = [];
+
+// ================================================================ SONIDO
+let audio = null;
+$("sonido").onclick = (ev) => {
+  audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+  ev.target.textContent = "Sonido activado";
+  pip(660, 0.15);
+};
+function pip(freq, dur) {
+  if (!audio) return;
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.25, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + dur);
+  o.connect(g); g.connect(audio.destination);
+  o.start(); o.stop(audio.currentTime + dur);
+}
+
+// ================================================================ VISTA (vaso, números)
+const agua = $("agua"), caja = $("caja"), principal = $("principal");
+
+(function hacerMarcas() {
+  for (let k = 1; k * ML_POR_PALTA <= CAPACIDAD; k++) {
+    const d = document.createElement("div");
+    d.className = "marca";
+    d.style.bottom = (k * ML_POR_PALTA / CAPACIDAD * 100) + "%";
+    d.innerHTML = "<b>" + k + (k === 1 ? " palta" : " paltas") + "</b>" + (k * L_REALES_POR_PALTA) + " L";
+    caja.appendChild(d);
+  }
+})();
+
+function dibujarIconos(n) {
+  const cont = $("iconos");
+  cont.innerHTML = "";
+  if (n === 0) {
+    for (let i = 0; i < 3; i++) cont.insertAdjacentHTML("beforeend", '<svg class="fantasma" viewBox="0 0 60 80"><use href="#palta"/></svg>');
+    return;
+  }
+  for (let i = 0; i < Math.min(n, MAX_ICONOS); i++)
+    cont.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 60 80"><use href="#palta"/></svg>');
+  if (n > MAX_ICONOS) cont.insertAdjacentHTML("beforeend", '<span class="mas">+' + (n - MAX_ICONOS) + "</span>");
+}
+
+function mostrar() {
+  if (paltas !== paltasAntes) {
+    if (paltasAntes >= 0) {
+      if (paltas > paltasAntes) pip(440 + 110 * paltas, 0.25);
+      else pip(300, 0.3);
+    }
+    dibujarIconos(paltas);
+    paltasAntes = paltas;
+  }
+  const litros = nivel / ML_POR_PALTA * L_REALES_POR_PALTA;
+  agua.style.height = Math.min(100, nivel / CAPACIDAD * 100) + "%";
+  $("paltas").textContent = paltas;
+  $("litros").textContent = Math.round(litros).toLocaleString("es-CL");
+  $("detalle").textContent = paltas === 0
+    ? "Pon paltas frente a la cámara."
+    : "Equivale a " + (litros / L_POR_DUCHA).toFixed(1).replace(".", ",") + " duchas de 5 minutos. Cada mL del vaso representa " +
+      (L_REALES_POR_PALTA / ML_POR_PALTA).toLocaleString("es-CL") + " L reales.";
+  for (const el of [principal, caja]) el.classList.toggle("regando", bombaFluye);
+  mostrarEstado();
+}
+
+function mostrarEstado() {
+  let texto, problema = false;
+  if (!window.isSecureContext) { texto = "Abre la página desde https:// o localhost"; problema = true; }
+  else if (!camara.ok) { texto = camara.mensaje; problema = true; }
+  else if (!serial.soportado && !MODO_SIN_ARDUINO) { texto = "Este navegador no puede hablar con el Arduino: usa Chrome o Edge"; problema = true; }
+  else if (!serial.ok && !MODO_SIN_ARDUINO) { texto = serial.mensaje; problema = true; }
+  else texto = bombaFluye ? "Bombeando agua" : "Bomba en reposo";
+  $("textoEstado").textContent = texto;
+  const est = $("estado");
+  est.classList.toggle("problema", problema);
+  est.classList.toggle("regando", !problema && bombaFluye);
+  $("conectarPie").hidden = !(serial.soportado && serial.sinPermiso);
+}
+
+// ================================================================ CÁMARA
+const video = $("video");
+const camara = { ok: false, mensaje: "Conectando la cámara…", stream: null, reintento: null, timerMute: null };
+
+async function iniciarCamara() {
+  detenerCamara();
+  clearTimeout(camara.reintento);
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    camara.mensaje = "Este navegador no permite usar la cámara aquí";
+    return;
+  }
+  const id = $("camaras").value || leer("camara", "");
+  const base = { width: { ideal: 1280 }, height: { ideal: 720 } };
+  try {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: id ? { ...base, deviceId: { exact: id } } : base });
+    } catch (e) {
+      if (!id || e.name === "NotAllowedError") throw e;
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: base }); // la guardada ya no está: usa otra
+    }
+    camara.stream = stream;
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    const pista = stream.getVideoTracks()[0];
+    // Si la cámara se desconecta o deja de mandar imagen, se vuelve a pedir sola
+    pista.onended = () => perderCamara("La cámara se desconectó. Reconectando…");
+    pista.onmute = () => { camara.timerMute = setTimeout(() => perderCamara("La cámara dejó de enviar imagen. Reconectando…"), 3000); };
+    pista.onunmute = () => clearTimeout(camara.timerMute);
+    camara.ok = true;
+    $("infoCamara").textContent = "Usando: " + (pista.label || "cámara") + " · " + (pista.getSettings().width || "?") + "×" + (pista.getSettings().height || "?");
+    await listarCamaras(pista.getSettings().deviceId);
+  } catch (e) {
+    camara.ok = false;
+    camara.mensaje = e.name === "NotAllowedError" ? "Permite el acceso a la cámara (icono en la barra de direcciones)"
+                   : e.name === "NotFoundError" ? "No hay ninguna cámara conectada. Esperando…"
+                   : e.name === "NotReadableError" ? "Otra aplicación está usando la cámara. Reintentando…"
+                   : "No se pudo abrir la cámara (" + e.name + "). Reintentando…";
+    $("infoCamara").textContent = camara.mensaje;
+    camara.reintento = setTimeout(iniciarCamara, 3000);
+  }
+  mostrarEstado();
+}
+
+function detenerCamara() {
+  clearTimeout(camara.timerMute);
+  if (camara.stream) camara.stream.getTracks().forEach(t => { t.onended = t.onmute = t.onunmute = null; t.stop(); });
+  camara.stream = null;
+  camara.ok = false;
+}
+
+function perderCamara(msg) {
+  detenerCamara();
+  camara.mensaje = msg;
+  $("infoCamara").textContent = msg;
+  mostrarEstado();
+  clearTimeout(camara.reintento);
+  camara.reintento = setTimeout(iniciarCamara, 1500);
+}
+
+async function listarCamaras(actual) {
+  const sel = $("camaras");
+  const dispositivos = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === "videoinput");
+  sel.innerHTML = "";
+  dispositivos.forEach((d, i) => {
+    const o = document.createElement("option");
+    o.value = d.deviceId; o.textContent = d.label || "Cámara " + (i + 1);
+    sel.appendChild(o);
+  });
+  if (actual) sel.value = actual;
+}
+
+$("camaras").onchange = () => { guardar("camara", $("camaras").value); iniciarCamara(); };
+if (navigator.mediaDevices) navigator.mediaDevices.addEventListener("devicechange", () => { if (!camara.ok) iniciarCamara(); else listarCamaras($("camaras").value); });
+
+// ================================================================ DETECCIÓN DE PALTAS
+// Misma idea que test.py: desenfocar → máscara (con color O oscuro) → abrir/cerrar 7×7 →
+// borrar márgenes → contar manchas con área entre "tamaño mínimo" y 40 % de la imagen.
+const proc = document.createElement("canvas");
+const pctx = proc.getContext("2d", { willReadFrequently: true });
+let mascara, tmpA, tmpB, etiquetas, pila;
+
+function buffers(n) {
+  if (mascara && mascara.length === n) return;
+  mascara = new Uint8Array(n); tmpA = new Uint8Array(n); tmpB = new Uint8Array(n);
+  etiquetas = new Int32Array(n); pila = new Int32Array(n);
+}
+
+// Erosión (erosionar=true) o dilatación de una máscara 0/1 con un cuadrado de lado 2r+1 (separable).
+function morfologia(src, dst, w, h, r, erosionar) {
+  const t = tmpB;
+  for (let y = 0; y < h; y++) {              // horizontal
+    const o = y * w; let s = 0;
+    for (let x = 0; x <= r && x < w; x++) s += src[o + x];
+    for (let x = 0; x < w; x++) {
+      const n = Math.min(w - 1, x + r) - Math.max(0, x - r) + 1;
+      t[o + x] = erosionar ? (s === n ? 1 : 0) : (s > 0 ? 1 : 0);
+      if (x - r >= 0) s -= src[o + x - r];
+      if (x + r + 1 < w) s += src[o + x + r + 1];
+    }
+  }
+  for (let x = 0; x < w; x++) {              // vertical
+    let s = 0;
+    for (let y = 0; y <= r && y < h; y++) s += t[y * w + x];
+    for (let y = 0; y < h; y++) {
+      const n = Math.min(h - 1, y + r) - Math.max(0, y - r) + 1;
+      dst[y * w + x] = erosionar ? (s === n ? 1 : 0) : (s > 0 ? 1 : 0);
+      if (y - r >= 0) s -= t[(y - r) * w + x];
+      if (y + r + 1 < h) s += t[(y + r + 1) * w + x];
+    }
+  }
+}
+
+function detectar() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return null;
+  const w = ANCHO_PROCESO, h = Math.round(ANCHO_PROCESO * vh / vw), n = w * h;
+  if (proc.width !== w || proc.height !== h) { proc.width = w; proc.height = h; }
+  buffers(n);
+
+  pctx.filter = "blur(1.7px)";                 // ≈ GaussianBlur 9×9 de OpenCV
+  pctx.drawImage(video, 0, 0, w, h);
+  pctx.filter = "none";
+  const px = pctx.getImageData(0, 0, w, h).data;
+
+  const vMax = +$("osc").value, sMin = +$("col").value, areaMin = +$("tam").value, areaMax = n * 0.4;
+
+  // HSV como OpenCV: V = máx(R,G,B), S = 255·(máx−mín)/máx
+  for (let i = 0, p = 0; i < n; i++, p += 4) {
+    const r = px[p], g = px[p + 1], b = px[p + 2];
+    const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+    const mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+    const s = mx === 0 ? 0 : Math.round(255 * (mx - mn) / mx);
+    mascara[i] = (s >= sMin || mx <= vMax) ? 1 : 0;
+  }
+  morfologia(mascara, tmpA, w, h, 3, true);  morfologia(tmpA, mascara, w, h, 3, false); // abrir
+  morfologia(mascara, tmpA, w, h, 3, false); morfologia(tmpA, mascara, w, h, 3, true);  // cerrar
+
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++)
+    if (y < MARGEN || y >= h - MARGEN || x < MARGEN || x >= w - MARGEN) mascara[y * w + x] = 0;
+
+  // Manchas conectadas (8 vecinos)
+  etiquetas.fill(0);
+  const cajas = [];
+  let et = 0;
+  for (let i = 0; i < n; i++) {
+    if (!mascara[i] || etiquetas[i]) continue;
+    et++;
+    let sp = 0, area = 0, x0 = w, y0 = h, x1 = 0, y1 = 0;
+    pila[sp++] = i; etiquetas[i] = et;
+    while (sp) {
+      const j = pila[--sp], x = j % w, y = (j - x) / w;
+      area++;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy; if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx; if (xx < 0 || xx >= w) continue;
+          const k = yy * w + xx;
+          if (mascara[k] && !etiquetas[k]) { etiquetas[k] = et; pila[sp++] = k; }
+        }
+      }
+    }
+    if (area > areaMin && area < areaMax) cajas.push({ x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 });
+  }
+  return { cajas, w, h };
+}
+
+function moda(lista) {
+  const cuenta = new Map(); let mejor = 0, veces = -1;
+  for (const v of lista) { const c = (cuenta.get(v) || 0) + 1; cuenta.set(v, c); if (c > veces) { veces = c; mejor = v; } }
+  return mejor;
+}
+
+// Vista previa en el panel (solo si está abierto, para ahorrar CPU)
+let imgMascara = null;
+function dibujarVista(r) {
+  const vista = $("vista"), vctx = vista.getContext("2d");
+  if (vista.width !== r.w || vista.height !== r.h) { vista.width = r.w; vista.height = r.h; }
+  vctx.drawImage(video, 0, 0, r.w, r.h);
+  vctx.strokeStyle = "#ff3b3b"; vctx.lineWidth = 3;
+  r.cajas.forEach(c => vctx.strokeRect(c.x, c.y, c.w, c.h));
+  vctx.fillStyle = "#ff3b3b"; vctx.font = "bold 28px sans-serif";
+  vctx.fillText("Paltas: " + paltas, 12, 38);
+
+  const cm = $("mascara"), mctx = cm.getContext("2d");
+  if (cm.width !== r.w || cm.height !== r.h) { cm.width = r.w; cm.height = r.h; imgMascara = null; }
+  if (!imgMascara) imgMascara = mctx.createImageData(r.w, r.h);
+  const d = imgMascara.data;
+  for (let i = 0, p = 0; i < mascara.length; i++, p += 4) { const v = mascara[i] * 255; d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = 255; }
+  mctx.putImageData(imgMascara, 0, 0);
+  $("infoDeteccion").textContent = "Manchas en este cuadro: " + r.cajas.length + " · estable: " + paltas;
+}
+
+// ================================================================ BUCLE PRINCIPAL
+let ultimoProceso = 0, tAnterior = performance.now();
+function bucle(t) {
+  requestAnimationFrame(bucle);
+  if (t - ultimoProceso < 1000 / CUADROS_POR_SEG) return;
+  if (!camara.ok || video.readyState < 2) { mostrarEstado(); return; }
+  ultimoProceso = t;
+
+  const r = detectar();
+  if (!r) return;
+
+  // estabilizar: la cantidad más repetida en los últimos 15 cuadros
+  historial.push(r.cajas.length);
+  if (historial.length > 15) historial.shift();
+  paltas = moda(historial);
+
+  // simular nivel y decidir la bomba
+  const objetivo = Math.min(paltas * ML_POR_PALTA, CAPACIDAD);
+  const ahora = performance.now();
+  // si la detección se trabó menos de 1 s la bomba siguió andando; si fue más, ya se había apagado
+  const dt = Math.min(ahora - tAnterior, ORDEN_VIGENTE_MS) / 1000;
+  tAnterior = ahora;
+
+  deseoBomba = nivel < objetivo;
+  ultimaOrden = ahora;
+  // el vaso de la pantalla solo sube si la bomba de verdad está recibiendo la orden
+  bombaFluye = deseoBomba && (serial.ok || MODO_SIN_ARDUINO);
+  if (bombaFluye) nivel = Math.min(objetivo, nivel + CAUDAL_ML_S * dt);
+  else if (nivel > objetivo) nivel = Math.max(objetivo, nivel - CAUDAL_ML_S * dt);
+
+  mostrar();
+  if (!$("panel").hidden) dibujarVista(r);
+}
+
+// ================================================================ ARDUINO (Web Serial)
+// Un temporizador propio, independiente de la cámara, le manda '1' o '0' cada 200 ms.
+// Si el USB se cae, se cierra el puerto y se vuelve a abrir solo en cuanto reaparece.
+const UNO = new Uint8Array([0x31]), CERO = new Uint8Array([0x30]);
+const serial = {
+  soportado: "serial" in navigator,
+  puerto: null, escritor: null, listo: false, ok: false,
+  ocupado: false, sinPermiso: false, ultimoIntento: 0,
+  mensaje: "Conectando con el Arduino…",
+};
+
+function avisoArduino(msg) {
+  serial.mensaje = msg;
+  $("infoArduino").textContent = msg;
+}
+
+function elegirPuerto(puertos) {
+  const pref = leer("puerto", null);
+  if (pref) {
+    const igual = puertos.find(p => { const i = p.getInfo(); return i.usbVendorId === pref.usbVendorId && i.usbProductId === pref.usbProductId; });
+    if (igual) return igual;
+  }
+  return puertos[0];
+}
+
+async function abrirPuerto(puertoPedido) {
+  if (serial.ocupado || serial.puerto) return;
+  serial.ocupado = true;
+  serial.ultimoIntento = performance.now();
+  let p = null;
+  try {
+    const puertos = puertoPedido ? [puertoPedido] : await navigator.serial.getPorts();
+    if (!puertos.length) {
+      serial.sinPermiso = true;
+      avisoArduino("Arduino sin conectar: pulsa «Conectar Arduino» y elige el puerto");
+      return;
+    }
+    serial.sinPermiso = false;
+    p = elegirPuerto(puertos);
+    avisoArduino("Abriendo el puerto del Arduino…");
+    await p.open({ baudRate: 9600 });
+    serial.puerto = p;
+    serial.escritor = p.writable.getWriter();
+    avisoArduino("Puerto abierto, esperando que el Arduino arranque…");
+    setTimeout(() => {               // el Arduino se reinicia al abrir el puerto (~2 s)
+      if (serial.puerto === p) { serial.listo = true; }
+    }, 2000);
+  } catch (e) {
+    if (p && e.name === "InvalidStateError") { try { await p.close(); } catch (_) {} } // quedó abierto: soltarlo
+    avisoArduino(e.name === "NetworkError"
+      ? "No se pudo abrir el puerto: ¿está abierto el Monitor Serie del Arduino IDE o test.py? Reintentando…"
+      : "No se pudo abrir el puerto (" + e.message + "). Reintentando…");
+  } finally {
+    serial.ocupado = false;
+    mostrarEstado();
+  }
+}
+
+async function cerrarPuerto(msg) {
+  const p = serial.puerto, w = serial.escritor;
+  serial.puerto = null; serial.escritor = null; serial.listo = false; serial.ok = false;
+  try { if (w) w.releaseLock(); } catch (_) {}
+  try { if (p) await p.close(); } catch (_) {}   // CLAVE: soltar el puerto para poder reabrirlo
+  if (msg) avisoArduino(msg);
+  mostrarEstado();
+}
+
+let enviando = false;
+async function tickSerial() {
+  if (!serial.soportado) return;
+  if (!serial.puerto) {
+    if (performance.now() - serial.ultimoIntento > 1000) abrirPuerto();
+    return;
+  }
+  if (!serial.listo || enviando) return;
+  const encender = deseoBomba && (performance.now() - ultimaOrden < ORDEN_VIGENTE_MS);
+  enviando = true;
+  try {
+    await serial.escritor.write(encender ? UNO : CERO);
+    if (!serial.ok) { serial.ok = true; avisoArduino("Arduino conectado ✔"); mostrarEstado(); }
+  } catch (e) {
+    await cerrarPuerto("Se cayó la conexión con el Arduino. Reconectando…");
+  } finally {
+    enviando = false;
+  }
+}
+
+async function pedirPuerto() {
+  if (!serial.soportado) { alert("Este navegador no tiene Web Serial. Usa Chrome o Edge en el computador."); return; }
+  try {
+    const p = await navigator.serial.requestPort();     // muestra la lista de puertos
+    const i = p.getInfo();
+    guardar("puerto", { usbVendorId: i.usbVendorId, usbProductId: i.usbProductId });
+    await cerrarPuerto();
+    await abrirPuerto(p);
+  } catch (e) { /* el usuario cerró la lista sin elegir */ }
+}
+
+$("conectar").onclick = pedirPuerto;
+$("conectarPie").onclick = pedirPuerto;
+$("olvidar").onclick = async () => {
+  const p = serial.puerto;
+  await cerrarPuerto("Puerto olvidado. Pulsa «Conectar Arduino» para elegir otro.");
+  guardar("puerto", null);
+  if (p && p.forget) { try { await p.forget(); } catch (_) {} }
+};
+
+if (serial.soportado) {
+  navigator.serial.addEventListener("connect", (e) => { if (!serial.puerto) abrirPuerto(e.target); });
+  navigator.serial.addEventListener("disconnect", (e) => {
+    if (e.target === serial.puerto) cerrarPuerto("Se desconectó el USB del Arduino. Esperando que vuelva…");
+  });
+  setInterval(tickSerial, ENVIO_MS);
+} else {
+  avisoArduino("Este navegador no tiene Web Serial: usa Chrome o Edge en el computador.");
+}
+
+// Al cerrar la página: intentar apagar la bomba (si no alcanza, el Arduino la apaga solo a 1 s)
+window.addEventListener("pagehide", () => { try { serial.escritor && serial.escritor.write(CERO); } catch (_) {} });
+
+// ================================================================ PANEL, TECLAS, AJUSTES
+for (const [id, etiqueta] of [["osc", "vOsc"], ["col", "vCol"], ["tam", "vTam"]]) {
+  const el = $(id);
+  el.value = leer(id, el.value);
+  const ver = () => { $(etiqueta).textContent = el.value; guardar(id, +el.value); };
+  el.oninput = ver; ver();
+}
+
+function alternarPanel() { $("panel").hidden = !$("panel").hidden; }
+function vaciar() { nivel = 0; mostrar(); }
+function pantallaCompleta() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen().catch(() => {});
+}
+$("abrirAjustes").onclick = alternarPanel;
+$("cerrarAjustes").onclick = alternarPanel;
+$("vaciar").onclick = vaciar;
+$("completa").onclick = pantallaCompleta;
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  const k = e.key.toLowerCase();
+  if (k === "a") alternarPanel();
+  else if (k === "r") vaciar();
+  else if (k === "f") pantallaCompleta();
+});
+
+// ================================================================ ARRANQUE
+dibujarIconos(0); paltasAntes = 0;
+mostrar();
+if (window.isSecureContext) iniciarCamara();
+requestAnimationFrame(bucle);
+</script>
+</body>
+</html>

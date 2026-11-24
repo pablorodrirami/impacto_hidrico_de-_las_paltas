@@ -19,42 +19,101 @@ CAPACIDAD = 1000       # mL que caben en el tupper (el nivel máximo)
 ESCALA = 0.35
 # =========================================================
  
-# ---------- Arduino ----------
-arduino = None
-ultimo_intento = 0
- 
-def conectar():
-    global arduino
-    try:
-        arduino = serial.Serial(PUERTO, 9600, timeout=0, write_timeout=0.3)
-        time.sleep(2)   # el Arduino necesita un momento al conectarse
-        print("Arduino conectado en", PUERTO)
-    except Exception as e:
-        arduino = None
-        print("No se pudo abrir", PUERTO, "->", e)
- 
-def bomba(encender):
-    global arduino, ultimo_intento
-    if not PUERTO:
-        return
-    if arduino is None:          # si no hay conexión, reintenta cada 3 segundos
-        if time.time() - ultimo_intento > 3:
-            ultimo_intento = time.time()
-            conectar()
-        return
-    try:
-        arduino.write(b"1" if encender else b"0")
-    except Exception as e:
-        print("FALLO al hablar con el Arduino:", e)
-        arduino = None
- 
+# ---------- Arduino (hilo propio: mantiene la conexión viva todo el tiempo) ----------
+# El bucle de la cámara solo dice qué quiere (deseo_bomba). Este hilo, independiente de la
+# cámara, le manda ese estado al Arduino cada 200 ms y, si la conexión se cae, CIERRA el
+# puerto y lo vuelve a abrir solo, sin congelar la cámara ni la página.
+from serial.tools import list_ports
+
+ENVIO_S = 0.2            # cada cuánto se le habla al Arduino (su watchdog corta a 1 s)
+ORDEN_VIGENTE_S = 1.0    # si la cámara no actualiza en este tiempo, la bomba se apaga por seguridad
+
+deseo_bomba = False      # lo que quiere el bucle de la cámara
+ultima_orden = 0.0       # cuándo lo actualizó por última vez
+arduino_ok = False       # True si la última escritura funcionó
+detener = threading.Event()
+
+def buscar_puerto():
+    """Usa PUERTO; si no aparece (Windows a veces cambia el COM al reconectar el USB), busca un Arduino."""
+    puertos = list(list_ports.comports())
+    if any(p.device == PUERTO for p in puertos):
+        return PUERTO
+    for p in puertos:
+        texto = (str(p.description) + " " + str(p.manufacturer)).lower()
+        if p.vid in (0x2341, 0x2A03, 0x1A86, 0x0403) or any(s in texto for s in ("arduino", "ch340", "usb-serial", "usb serial")):
+            return p.device
+    return None
+
+def hilo_arduino():
+    global arduino_ok
+    conexion = None
+    ultimo_aviso = None
+
+    def avisar(msg):               # imprime solo cuando el mensaje cambia (no llena la consola)
+        nonlocal ultimo_aviso
+        if msg != ultimo_aviso:
+            print(msg)
+            ultimo_aviso = msg
+
+    def cerrar():
+        nonlocal conexion
+        try:
+            conexion.close()       # CLAVE: liberar el COM, si no Windows no deja reabrirlo
+        except Exception:
+            pass
+        conexion = None
+
+    while not detener.is_set():
+        if conexion is None:
+            arduino_ok = False
+            puerto = buscar_puerto()
+            if puerto is None:
+                avisar("Arduino no encontrado (¿USB desconectado?). Reintentando…")
+                detener.wait(1)
+                continue
+            try:
+                conexion = serial.Serial(puerto, 9600, timeout=0, write_timeout=0.5)
+                detener.wait(2)    # el Arduino se reinicia al abrir el puerto
+                conexion.reset_input_buffer()
+                avisar("Arduino conectado en " + puerto)
+            except Exception as e:
+                if conexion is not None:
+                    cerrar()
+                avisar("No se pudo abrir " + puerto + " -> " + str(e) +
+                       "  (¿Monitor Serie del IDE abierto?) Reintentando…")
+                detener.wait(1)
+                continue
+
+        encender = deseo_bomba and (time.time() - ultima_orden < ORDEN_VIGENTE_S)
+        try:
+            conexion.write(b"1" if encender else b"0")
+            arduino_ok = True
+        except Exception as e:
+            avisar("Se cayó la conexión con el Arduino -> " + str(e) + "  Reconectando…")
+            cerrar()
+            arduino_ok = False
+            detener.wait(0.5)
+            continue
+        detener.wait(ENVIO_S)
+
+    # Al salir: apagar la bomba y soltar el puerto
+    if conexion is not None:
+        try:
+            conexion.write(b"0")
+            conexion.flush()
+        except Exception:
+            pass
+        cerrar()
+    arduino_ok = False
+
+hilo_serial = None
 if PUERTO:
-    conectar()
-    if arduino is None:
-        print("Sigo SIN Arduino por ahora (reintentaré solo). Cierra el Monitor Serie del IDE si lo tienes abierto.")
- 
+    hilo_serial = threading.Thread(target=hilo_arduino, daemon=True)
+    hilo_serial.start()
+
 # ---------- Servidor web (sirve index.html y el estado) ----------
 estado = {"paltas": 0, "nivel": 0, "capacidad": CAPACIDAD, "bomba": False,
+          "arduino": False if PUERTO else None, "camara": False,
           "litros_reales": 0, "ml_por_palta": ML_POR_PALTA, "l_por_palta": L_REALES_POR_PALTA}
 carpeta = os.path.dirname(os.path.abspath(__file__))
  
@@ -80,10 +139,18 @@ threading.Thread(target=servidor.serve_forever, daemon=True).start()
 print("Página lista en http://localhost:8000")
  
 # ---------- Cámara ----------
-cap = cv2.VideoCapture(URL)
-if not cap.isOpened():
-    print("No se pudo abrir la cámara. Revisa la IP y que el servidor esté iniciado.")
-    exit()
+def abrir_camara():
+    """Insiste hasta abrir la cámara (no cierra el programa si el celular tarda o se cae el Wi-Fi)."""
+    while True:
+        c = cv2.VideoCapture(URL)
+        if c.isOpened():
+            print("Cámara conectada")
+            return c
+        c.release()
+        print("No se pudo abrir la cámara. Revisa la IP y que IP Webcam esté iniciado. Reintentando…")
+        time.sleep(3)
+
+cap = abrir_camara()
  
 kernel = np.ones((7, 7), np.uint8)
 def nada(x):
@@ -110,11 +177,18 @@ try:
         if not ok:
             fallos += 1
             if fallos > 30:
-                print("Se perdió la cámara")
-                break
-            time.sleep(0.05)
+                print("Se perdió la cámara. Reconectando…")
+                estado["camara"] = False
+                cap.release()
+                cap = abrir_camara()
+                fallos = 0
+            else:
+                time.sleep(0.05)
+            estado["arduino"] = arduino_ok if PUERTO else None
+            cv2.waitKey(1)   # mantiene las ventanas vivas
             continue
         fallos = 0
+        estado["camara"] = True
  
         # ===== DETECTAR PALTAS =====
         alto, ancho = frame.shape[:2]
@@ -154,7 +228,9 @@ try:
         # ===== SIMULAR NIVEL Y MANEJAR BOMBA =====
         objetivo = min(paltas * ML_POR_PALTA, CAPACIDAD)
         ahora = time.time()
-        dt = min(ahora - tiempo_anterior, 0.2)
+        # mismo tope que ORDEN_VIGENTE_S: si la cámara se trabó menos de 1 s la bomba siguió
+        # andando y la simulación lo descuenta; si fue más, el hilo ya la había apagado.
+        dt = min(ahora - tiempo_anterior, ORDEN_VIGENTE_S)
         tiempo_anterior = ahora
  
         bomba_encendida = False
@@ -164,9 +240,11 @@ try:
         elif nivel > objetivo:
             nivel = max(objetivo, nivel - CAUDAL_ML_S * dt)
  
-        bomba(bomba_encendida)   # la bomba real sigue a la simulación
- 
+        deseo_bomba = bomba_encendida   # la bomba real sigue a la simulación (la envía el hilo)
+        ultima_orden = ahora
+
         estado.update({"paltas": paltas, "nivel": round(nivel, 1), "bomba": bomba_encendida,
+                       "arduino": arduino_ok if PUERTO else None,
                        "litros_reales": round(nivel / ML_POR_PALTA * L_REALES_POR_PALTA, 1)})
  
         # ===== MOSTRAR =====
@@ -179,9 +257,10 @@ try:
         if k == ord("r"):       # r = reiniciar el nivel a 0 (después de vaciar el tupper a mano)
             nivel = 0.0
 finally:
-    bomba(False)
-    if arduino:
-        arduino.close()
+    deseo_bomba = False
+    detener.set()                 # el hilo manda '0' y cierra el puerto
+    if hilo_serial:
+        hilo_serial.join(timeout=3)
     cap.release()
     cv2.destroyAllWindows()
     servidor.shutdown()
