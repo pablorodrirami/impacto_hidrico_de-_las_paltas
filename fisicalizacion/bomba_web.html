@@ -214,14 +214,23 @@
   </aside>
 
 <script>
-// ===================== CONFIGURACIÓN (igual que en test.py) =====================
-const ML_POR_PALTA = 110;       // 1 palta = 110 mL de agua en el vaso
-const L_REALES_POR_PALTA = 110; // ...que representan 110 L reales
-const CAUDAL_ML_S = 25;         // IMPORTANTE: caudal REAL de tu bomba en mL/s
-const CAPACIDAD = 1000;         // mL que caben en el tupper
+// ===================== CONFIGURACIÓN =====================
+// VERTIDO POR PALTA. La bomba la maneja el ARDUINO (bomba_palta.ino): la página solo le manda
+// cuántas paltas ve ('0'…'9', o 'x' si la cámara no entrega imagen). Cada palta NUEVA suma
+// SEGUNDOS_POR_PALTA de chorro continuo, que sigue aunque saquen la palta.
+// La pantalla (vaso, textos) es solo una animación que imita al Arduino: NO influye en la bomba.
+// ⚠ Estos dos valores deben ser IGUALES a los del .ino (aquí solo se usan para la animación);
+//   si los cambias, cámbialos también en el .ino y vuelve a cargarlo.
+const SEGUNDOS_POR_PALTA = 15;  // = MS_POR_PALTA / 1000 del .ino
+const ESPERA_QUITAR_S = 2;      // = ESPERA_QUITAR_MS / 1000 del .ino
+const MAX_PENDIENTE_S = 180;    // = MAX_PENDIENTE_MS / 1000 del .ino
+const CAUDAL_ML_S = 25;         // IMPORTANTE: caudal REAL de tu bomba en mL/s (calibrar)
+const CAPACIDAD = 1000;         // mL que muestra el vaso de la pantalla (solo visual)
+const L_REALES_POR_ML = 1;      // cada mL del vaso representa esta cantidad de litros reales
+const MARCA_CADA_ML = 100;      // separación de las marcas del vaso
 const L_POR_DUCHA = 60;         // litros de una ducha de ~5 min (verifica y cita tu fuente)
 const MARGEN = 30;              // px del borde que se ignoran
-const MODO_SIN_ARDUINO = false; // true = el vaso de la pantalla se llena aunque no haya Arduino (para probar)
+const MODO_SIN_ARDUINO = false; // true = la animación corre aunque no haya Arduino conectado (para probar)
 
 const ANCHO_PROCESO = 640;      // la imagen se analiza a este ancho
 const CUADROS_POR_SEG = 15;     // cuántas veces por segundo se analiza
@@ -236,7 +245,10 @@ const leer = (k, def) => { try { const v = localStorage.getItem("palta." + k); r
 
 // ---------------------------------------------------------------- estado general
 let nivel = 0, paltas = 0, paltasAntes = -1;
-let deseoBomba = false, ultimaOrden = 0, bombaFluye = false;
+let bombaFluye = false;         // animación: la bomba "está encendida" en la pantalla
+let ultimaDeteccion = 0;        // última vez que la cámara entregó un conteo
+let ultimoControl = 0;          // última vez que corrió el bucle de envío/animación
+const sim = { contadas: 0, bajando: false, desde: 0, pendiente: 0 };  // copia de la lógica del Arduino, solo para la animación
 const historial = [];
 
 // ================================================================ SONIDO
@@ -260,11 +272,11 @@ function pip(freq, dur) {
 const agua = $("agua"), caja = $("caja"), principal = $("principal");
 
 (function hacerMarcas() {
-  for (let k = 1; k * ML_POR_PALTA <= CAPACIDAD; k++) {
+  for (let ml = MARCA_CADA_ML; ml <= CAPACIDAD; ml += MARCA_CADA_ML) {
     const d = document.createElement("div");
     d.className = "marca";
-    d.style.bottom = (k * ML_POR_PALTA / CAPACIDAD * 100) + "%";
-    d.innerHTML = "<b>" + k + (k === 1 ? " palta" : " paltas") + "</b>" + (k * L_REALES_POR_PALTA) + " L";
+    d.style.bottom = (ml / CAPACIDAD * 100) + "%";
+    d.innerHTML = "<b>" + ml + " mL</b>" + (ml * L_REALES_POR_ML).toLocaleString("es-CL") + " L";
     caja.appendChild(d);
   }
 })();
@@ -290,14 +302,16 @@ function mostrar() {
     dibujarIconos(paltas);
     paltasAntes = paltas;
   }
-  const litros = nivel / ML_POR_PALTA * L_REALES_POR_PALTA;
+  const litros = nivel * L_REALES_POR_ML;
+  const coma = (x, d) => x.toFixed(d).replace(".", ",");
   agua.style.height = Math.min(100, nivel / CAPACIDAD * 100) + "%";
   $("paltas").textContent = paltas;
   $("litros").textContent = Math.round(litros).toLocaleString("es-CL");
-  $("detalle").textContent = paltas === 0
-    ? "Pon paltas frente a la cámara."
-    : "Equivale a " + (litros / L_POR_DUCHA).toFixed(1).replace(".", ",") + " duchas de 5 minutos. Cada mL del vaso representa " +
-      (L_REALES_POR_PALTA / ML_POR_PALTA).toLocaleString("es-CL") + " L reales.";
+  const duchas = litros > 0 ? " Llevamos el equivalente a " + coma(litros / L_POR_DUCHA, 1) + " duchas de 5 minutos." : "";
+  const falta = Math.ceil(sim.pendiente / 1000);
+  $("detalle").textContent = (sim.pendiente > 0
+    ? "El agua de esta palta ya se gastó: aunque la saques, el chorro sigue " + falta + (falta === 1 ? " segundo más." : " segundos más.")
+    : "Pon paltas frente a la cámara.") + duchas;
   for (const el of [principal, caja]) el.classList.toggle("regando", bombaFluye);
   mostrarEstado();
 }
@@ -328,14 +342,24 @@ async function iniciarCamara() {
     return;
   }
   const id = $("camaras").value || leer("camara", "");
-  const base = { width: { ideal: 1280 }, height: { ideal: 720 } };
+  // No se pide resolución: las cámaras virtuales (DroidCam, Iriun…) entregan una imagen VERDE
+  // vacía si se les pide una distinta a la que están enviando. La detección trabaja a 640 px igual.
+  const pedir = (video) => navigator.mediaDevices.getUserMedia({ audio: false, video });
+  let aviso = "";
   try {
     let stream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: id ? { ...base, deviceId: { exact: id } } : base });
-    } catch (e) {
-      if (!id || e.name === "NotAllowedError") throw e;
-      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: base }); // la guardada ya no está: usa otra
+    if (!id) {
+      stream = await pedir(true);
+    } else {
+      try {
+        stream = await pedir({ deviceId: { exact: id } });
+      } catch (e) {
+        console.warn("No se pudo abrir la cámara elegida:", e);
+        // Solo si la cámara elegida ya no existe se usa otra; si existe pero falla, se avisa y se reintenta ESA
+        if (e.name !== "NotFoundError" && e.name !== "OverconstrainedError") throw e;
+        stream = await pedir(true);
+        aviso = " (la cámara elegida no está conectada: usando otra)";
+      }
     }
     camara.stream = stream;
     video.srcObject = stream;
@@ -346,14 +370,16 @@ async function iniciarCamara() {
     pista.onmute = () => { camara.timerMute = setTimeout(() => perderCamara("La cámara dejó de enviar imagen. Reconectando…"), 3000); };
     pista.onunmute = () => clearTimeout(camara.timerMute);
     camara.ok = true;
-    $("infoCamara").textContent = "Usando: " + (pista.label || "cámara") + " · " + (pista.getSettings().width || "?") + "×" + (pista.getSettings().height || "?");
+    $("infoCamara").textContent = "Usando: " + (pista.label || "cámara") + " · " + (pista.getSettings().width || "?") + "×" + (pista.getSettings().height || "?") + aviso;
     await listarCamaras(pista.getSettings().deviceId);
   } catch (e) {
+    console.warn("No se pudo abrir la cámara:", e);
     camara.ok = false;
+    const nombre = id && $("camaras").selectedOptions[0] ? "«" + $("camaras").selectedOptions[0].textContent + "» " : "";
     camara.mensaje = e.name === "NotAllowedError" ? "Permite el acceso a la cámara (icono en la barra de direcciones)"
                    : e.name === "NotFoundError" ? "No hay ninguna cámara conectada. Esperando…"
-                   : e.name === "NotReadableError" ? "Otra aplicación está usando la cámara. Reintentando…"
-                   : "No se pudo abrir la cámara (" + e.name + "). Reintentando…";
+                   : e.name === "NotReadableError" ? "La cámara " + nombre + "no entrega imagen: ¿está ocupada por otra app o detenida (DroidCam: pulsa Start)? Reintentando…"
+                   : "No se pudo abrir la cámara " + nombre + "(" + e.name + ": " + e.message + "). Reintentando…";
     $("infoCamara").textContent = camara.mensaje;
     camara.reintento = setTimeout(iniciarCamara, 3000);
   }
@@ -365,6 +391,7 @@ function detenerCamara() {
   if (camara.stream) camara.stream.getTracks().forEach(t => { t.onended = t.onmute = t.onunmute = null; t.stop(); });
   camara.stream = null;
   camara.ok = false;
+  recorte = null;   // la próxima cámara puede tener otros bordes
 }
 
 function perderCamara(msg) {
@@ -429,15 +456,54 @@ function morfologia(src, dst, w, h, r, erosionar) {
   }
 }
 
+// Bordes negros: DroidCam (y otras cámaras virtuales) pueden poner franjas negras alrededor de
+// la imagen. Como lo oscuro cuenta como "palta", esas franjas se detectarían como una palta enorme.
+// Cada 2 s se buscan filas/columnas del borde completamente negras y se recortan.
+const borde = document.createElement("canvas");
+const bctx = borde.getContext("2d", { willReadFrequently: true });
+let recorte = null, ultimoBorde = 0;
+
+function medirBordes() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const W = 160, H = Math.max(1, Math.round(160 * vh / vw));
+  if (borde.width !== W || borde.height !== H) { borde.width = W; borde.height = H; }
+  bctx.drawImage(video, 0, 0, W, H);
+  const d = bctx.getImageData(0, 0, W, H).data;
+  const UMBRAL = 24;  // más oscuro que esto en TODA la fila/columna = franja negra
+  const hayImagen = (x0, y0, dx, dy, pasos) => {
+    for (let i = 0, x = x0, y = y0; i < pasos; i++, x += dx, y += dy) {
+      const p = (y * W + x) * 4;
+      if (d[p] > UMBRAL || d[p + 1] > UMBRAL || d[p + 2] > UMBRAL) return true;
+    }
+    return false;
+  };
+  let arriba = 0, abajo = H - 1, izq = 0, der = W - 1;
+  while (arriba < H && !hayImagen(0, arriba, 1, 0, W)) arriba++;
+  while (abajo > arriba && !hayImagen(0, abajo, 1, 0, W)) abajo--;
+  while (izq < W && !hayImagen(izq, 0, 0, 1, H)) izq++;
+  while (der > izq && !hayImagen(der, 0, 0, 1, H)) der--;
+
+  const nada = arriba === 0 && abajo === H - 1 && izq === 0 && der === W - 1;
+  // Si casi toda la imagen es negra (cámara tapada, oscuridad) no se recorta nada
+  if (nada || der - izq < W * 0.3 || abajo - arriba < H * 0.3) { recorte = { sx: 0, sy: 0, sw: vw, sh: vh }; return; }
+  const fx = vw / W, fy = vh / H, m = 1;  // m: un poquito hacia adentro para no tomar el borde difuso
+  const a = Math.min(arriba + (arriba ? m : 0), H - 1), b = Math.max(abajo - (abajo < H - 1 ? m : 0), a + 1);
+  const l = Math.min(izq + (izq ? m : 0), W - 1), r = Math.max(der - (der < W - 1 ? m : 0), l + 1);
+  recorte = { sx: l * fx, sy: a * fy, sw: (r - l + 1) * fx, sh: (b - a + 1) * fy };
+}
+
 function detectar() {
   const vw = video.videoWidth, vh = video.videoHeight;
   if (!vw || !vh) return null;
-  const w = ANCHO_PROCESO, h = Math.round(ANCHO_PROCESO * vh / vw), n = w * h;
+  const ahora = performance.now();
+  if (!recorte || ahora - ultimoBorde > 2000) { medirBordes(); ultimoBorde = ahora; }
+  const { sx, sy, sw, sh } = recorte;
+  const w = ANCHO_PROCESO, h = Math.round(ANCHO_PROCESO * sh / sw), n = w * h;
   if (proc.width !== w || proc.height !== h) { proc.width = w; proc.height = h; }
   buffers(n);
 
   pctx.filter = "blur(1.7px)";                 // ≈ GaussianBlur 9×9 de OpenCV
-  pctx.drawImage(video, 0, 0, w, h);
+  pctx.drawImage(video, sx, sy, sw, sh, 0, 0, w, h);
   pctx.filter = "none";
   const px = pctx.getImageData(0, 0, w, h).data;
 
@@ -479,7 +545,10 @@ function detectar() {
         }
       }
     }
-    if (area > areaMin && area < areaMax) cajas.push({ x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 });
+    const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+    // una palta nunca ocupa casi todo el ancho o alto de la imagen: eso es un borde, una sombra o la mesa
+    const gigante = cw > (w - 2 * MARGEN) * 0.85 || ch > (h - 2 * MARGEN) * 0.85;
+    if (area > areaMin && area < areaMax && !gigante) cajas.push({ x: x0, y: y0, w: cw, h: ch });
   }
   return { cajas, w, h };
 }
@@ -495,7 +564,7 @@ let imgMascara = null;
 function dibujarVista(r) {
   const vista = $("vista"), vctx = vista.getContext("2d");
   if (vista.width !== r.w || vista.height !== r.h) { vista.width = r.w; vista.height = r.h; }
-  vctx.drawImage(video, 0, 0, r.w, r.h);
+  vctx.drawImage(video, recorte.sx, recorte.sy, recorte.sw, recorte.sh, 0, 0, r.w, r.h);
   vctx.strokeStyle = "#ff3b3b"; vctx.lineWidth = 3;
   r.cajas.forEach(c => vctx.strokeRect(c.x, c.y, c.w, c.h));
   vctx.fillStyle = "#ff3b3b"; vctx.font = "bold 28px sans-serif";
@@ -507,11 +576,13 @@ function dibujarVista(r) {
   const d = imgMascara.data;
   for (let i = 0, p = 0; i < mascara.length; i++, p += 4) { const v = mascara[i] * 255; d[p] = d[p + 1] = d[p + 2] = v; d[p + 3] = 255; }
   mctx.putImageData(imgMascara, 0, 0);
-  $("infoDeteccion").textContent = "Manchas en este cuadro: " + r.cajas.length + " · estable: " + paltas;
+  const recortado = recorte.sw < video.videoWidth - 1 || recorte.sh < video.videoHeight - 1;
+  $("infoDeteccion").textContent = "Manchas en este cuadro: " + r.cajas.length + " · estable: " + paltas +
+    (recortado ? " · bordes negros recortados (" + Math.round(recorte.sw) + "×" + Math.round(recorte.sh) + " de " + video.videoWidth + "×" + video.videoHeight + ")" : "");
 }
 
 // ================================================================ BUCLE PRINCIPAL
-let ultimoProceso = 0, tAnterior = performance.now();
+let ultimoProceso = 0;
 function bucle(t) {
   requestAnimationFrame(bucle);
   if (t - ultimoProceso < 1000 / CUADROS_POR_SEG) return;
@@ -525,29 +596,57 @@ function bucle(t) {
   historial.push(r.cajas.length);
   if (historial.length > 15) historial.shift();
   paltas = moda(historial);
+  ultimaDeteccion = performance.now();
 
-  // simular nivel y decidir la bomba
-  const objetivo = Math.min(paltas * ML_POR_PALTA, CAPACIDAD);
-  const ahora = performance.now();
-  // si la detección se trabó menos de 1 s la bomba siguió andando; si fue más, ya se había apagado
-  const dt = Math.min(ahora - tAnterior, ORDEN_VIGENTE_MS) / 1000;
-  tAnterior = ahora;
-
-  deseoBomba = nivel < objetivo;
-  ultimaOrden = ahora;
-  // el vaso de la pantalla solo sube si la bomba de verdad está recibiendo la orden
-  bombaFluye = deseoBomba && (serial.ok || MODO_SIN_ARDUINO);
-  if (bombaFluye) nivel = Math.min(objetivo, nivel + CAUDAL_ML_S * dt);
-  else if (nivel > objetivo) nivel = Math.max(objetivo, nivel - CAUDAL_ML_S * dt);
-
-  mostrar();
   if (!$("panel").hidden) dibujarVista(r);
 }
 
+// ================================================================ CONTROL DE LA BOMBA (vertido por palta)
+// La página solo le dice al Arduino CUÁNTAS paltas ve; el Arduino decide cuánto verter.
+// Aquí además se anima el vaso imitando al Arduino, pero la animación NO cambia lo que se envía.
+
+// Lo que se le manda: '0'…'9' = paltas que ve la cámara; 'x' = la cámara no está entregando imagen
+// (el Arduino pausa el vertido, pero NO lo toma como que sacaron las paltas: al volver no cobra de nuevo)
+function codigoParaArduino() {
+  if (performance.now() - ultimaDeteccion >= ORDEN_VIGENTE_MS) return "x";
+  return String(Math.min(9, paltas));
+}
+
+let tControl = performance.now(), codigoEnviado = null;
+function controlBomba() {
+  const ahora = performance.now();
+  const dtMs = Math.min(ahora - tControl, ORDEN_VIGENTE_MS);
+  tControl = ahora;
+  ultimoControl = ahora;
+
+  const cod = codigoParaArduino();
+  if (cod !== codigoEnviado) { enviarYa = true; tickSerial(); }   // al cambiar, avisar de inmediato
+
+  // ---- solo animación: misma lógica que el .ino (no afecta al Arduino) ----
+  if (bombaFluye) {
+    nivel = Math.min(CAPACIDAD, nivel + CAUDAL_ML_S * dtMs / 1000);
+    sim.pendiente = Math.max(0, sim.pendiente - dtMs);
+  }
+  const activo = (serial.ok || MODO_SIN_ARDUINO) && cod !== "x";
+  if (activo) {
+    const n = +cod;
+    if (n > sim.contadas) {
+      sim.pendiente = Math.min(MAX_PENDIENTE_S * 1000, sim.pendiente + (n - sim.contadas) * SEGUNDOS_POR_PALTA * 1000);
+      sim.contadas = n; sim.bajando = false;
+    } else if (n < sim.contadas) {
+      if (!sim.bajando) { sim.bajando = true; sim.desde = ahora; }
+      else if (ahora - sim.desde >= ESPERA_QUITAR_S * 1000) { sim.contadas = n; sim.bajando = false; }
+    } else sim.bajando = false;
+  }
+  bombaFluye = activo && sim.pendiente > 0;
+  mostrar();
+}
+setInterval(controlBomba, 50);
+
 // ================================================================ ARDUINO (Web Serial)
-// Un temporizador propio, independiente de la cámara, le manda '1' o '0' cada 200 ms.
-// Si el USB se cae, se cierra el puerto y se vuelve a abrir solo en cuanto reaparece.
-const UNO = new Uint8Array([0x31]), CERO = new Uint8Array([0x30]);
+// Un temporizador propio, independiente de la cámara y de la animación, le manda la cantidad de
+// paltas cada 200 ms (y al instante cuando cambia). Si el USB se cae, se cierra el puerto y se
+// vuelve a abrir solo en cuanto reaparece; mientras tanto el Arduino detiene la bomba (su watchdog).
 const serial = {
   soportado: "serial" in navigator,
   puerto: null, escritor: null, listo: false, ok: false,
@@ -588,7 +687,7 @@ async function abrirPuerto(puertoPedido) {
     serial.puerto = p;
     serial.escritor = p.writable.getWriter();
     avisoArduino("Puerto abierto, esperando que el Arduino arranque…");
-    setTimeout(() => {               // el Arduino se reinicia al abrir el puerto (~2 s)
+    setTimeout(() => {               // algunos Arduino se reinician al abrir el puerto (~2 s)
       if (serial.puerto === p) { serial.listo = true; }
     }, 2000);
   } catch (e) {
@@ -611,7 +710,7 @@ async function cerrarPuerto(msg) {
   mostrarEstado();
 }
 
-let enviando = false;
+let enviando = false, enviarYa = false;
 async function tickSerial() {
   if (!serial.soportado) return;
   if (!serial.puerto) {
@@ -619,10 +718,15 @@ async function tickSerial() {
     return;
   }
   if (!serial.listo || enviando) return;
-  const encender = deseoBomba && (performance.now() - ultimaOrden < ORDEN_VIGENTE_MS);
   enviando = true;
   try {
-    await serial.escritor.write(encender ? UNO : CERO);
+    do {
+      enviarYa = false;
+      // si el control dejó de correr (pestaña congelada), se manda 'x' para que el Arduino pause
+      const cod = (performance.now() - ultimoControl < 500) ? codigoParaArduino() : "x";
+      await serial.escritor.write(new Uint8Array([cod.charCodeAt(0)]));   // '0'…'9' o 'x'
+      codigoEnviado = cod;
+    } while (enviarYa);               // si cambió mientras se enviaba, mandar el valor nuevo
     if (!serial.ok) { serial.ok = true; avisoArduino("Arduino conectado ✔"); mostrarEstado(); }
   } catch (e) {
     await cerrarPuerto("Se cayó la conexión con el Arduino. Reconectando…");
@@ -662,7 +766,7 @@ if (serial.soportado) {
 }
 
 // Al cerrar la página: intentar apagar la bomba (si no alcanza, el Arduino la apaga solo a 1 s)
-window.addEventListener("pagehide", () => { try { serial.escritor && serial.escritor.write(CERO); } catch (_) {} });
+window.addEventListener("pagehide", () => { try { serial.escritor && serial.escritor.write(new Uint8Array([0x30])); } catch (_) {} });
 
 // ================================================================ PANEL, TECLAS, AJUSTES
 for (const [id, etiqueta] of [["osc", "vOsc"], ["col", "vCol"], ["tam", "vTam"]]) {
@@ -673,7 +777,7 @@ for (const [id, etiqueta] of [["osc", "vOsc"], ["col", "vCol"], ["tam", "vTam"]]
 }
 
 function alternarPanel() { $("panel").hidden = !$("panel").hidden; }
-function vaciar() { nivel = 0; mostrar(); }
+function vaciar() { nivel = 0; mostrar(); }   // solo la animación del vaso; el Arduino no cambia
 function pantallaCompleta() {
   if (document.fullscreenElement) document.exitFullscreen();
   else document.documentElement.requestFullscreen().catch(() => {});
