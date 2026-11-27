@@ -165,7 +165,6 @@
       <div class="iconos" id="iconos"></div>
     </div>
     <div class="real"><span id="litros">0</span> litros de agua reales</div>
-    <p class="detalle" id="detalle">Pon paltas frente a la cámara.</p>
     <div class="pie">
       <div class="estado" id="estado"><span class="punto"></span><span id="textoEstado">Iniciando…</span></div>
       <button class="boton" id="sonido">Activar sonido</button>
@@ -224,10 +223,10 @@
 const SEGUNDOS_POR_PALTA = 15;  // = MS_POR_PALTA / 1000 del .ino
 const ESPERA_QUITAR_S = 2;      // = ESPERA_QUITAR_MS / 1000 del .ino
 const MAX_PENDIENTE_S = 180;    // = MAX_PENDIENTE_MS / 1000 del .ino
-const CAUDAL_ML_S = 25;         // IMPORTANTE: caudal REAL de tu bomba en mL/s (calibrar)
-const CAPACIDAD = 1000;         // mL que muestra el vaso de la pantalla (solo visual)
-const L_REALES_POR_ML = 1;      // cada mL del vaso representa esta cantidad de litros reales
-const MARCA_CADA_ML = 100;      // separación de las marcas del vaso
+const L_POR_PALTA = 120;        // litros de agua que representa cada palta (lo que muestra la pantalla)
+const L_POR_SEGUNDO = L_POR_PALTA / SEGUNDOS_POR_PALTA;  // litros que suma la pantalla por segundo de chorro (120 ÷ 15 = 8)
+const PALTAS_EN_VASO = 6;       // el vaso de la pantalla tiene marcas hasta esta cantidad de paltas
+const CAPACIDAD = L_POR_PALTA * PALTAS_EN_VASO;  // litros que caben en el vaso de la pantalla (solo visual)
 const L_POR_DUCHA = 60;         // litros de una ducha de ~5 min (verifica y cita tu fuente)
 const MARGEN = 30;              // px del borde que se ignoran
 const MODO_SIN_ARDUINO = false; // true = la animación corre aunque no haya Arduino conectado (para probar)
@@ -244,7 +243,7 @@ const guardar = (k, v) => { try { localStorage.setItem("palta." + k, JSON.string
 const leer = (k, def) => { try { const v = localStorage.getItem("palta." + k); return v === null ? def : JSON.parse(v); } catch (e) { return def; } };
 
 // ---------------------------------------------------------------- estado general
-let nivel = 0, paltas = 0, paltasAntes = -1;
+let nivel = 0, paltas = 0, paltasAntes = -1;   // nivel = litros reales que muestra la pantalla
 let bombaFluye = false;         // animación: la bomba "está encendida" en la pantalla
 let ultimaDeteccion = 0;        // última vez que la cámara entregó un conteo
 let ultimoControl = 0;          // última vez que corrió el bucle de envío/animación
@@ -272,11 +271,11 @@ function pip(freq, dur) {
 const agua = $("agua"), caja = $("caja"), principal = $("principal");
 
 (function hacerMarcas() {
-  for (let ml = MARCA_CADA_ML; ml <= CAPACIDAD; ml += MARCA_CADA_ML) {
+  for (let k = 1; k <= PALTAS_EN_VASO; k++) {
     const d = document.createElement("div");
     d.className = "marca";
-    d.style.bottom = (ml / CAPACIDAD * 100) + "%";
-    d.innerHTML = "<b>" + ml + " mL</b>" + (ml * L_REALES_POR_ML).toLocaleString("es-CL") + " L";
+    d.style.bottom = (k / PALTAS_EN_VASO * 100) + "%";
+    d.textContent = (k * L_POR_PALTA).toLocaleString("es-CL") + " L";
     caja.appendChild(d);
   }
 })();
@@ -302,16 +301,9 @@ function mostrar() {
     dibujarIconos(paltas);
     paltasAntes = paltas;
   }
-  const litros = nivel * L_REALES_POR_ML;
-  const coma = (x, d) => x.toFixed(d).replace(".", ",");
   agua.style.height = Math.min(100, nivel / CAPACIDAD * 100) + "%";
   $("paltas").textContent = paltas;
-  $("litros").textContent = Math.round(litros).toLocaleString("es-CL");
-  const duchas = litros > 0 ? " Llevamos el equivalente a " + coma(litros / L_POR_DUCHA, 1) + " duchas de 5 minutos." : "";
-  const falta = Math.ceil(sim.pendiente / 1000);
-  $("detalle").textContent = (sim.pendiente > 0
-    ? "El agua de esta palta ya se gastó: aunque la saques, el chorro sigue " + falta + (falta === 1 ? " segundo más." : " segundos más.")
-    : "Pon paltas frente a la cámara.") + duchas;
+  $("litros").textContent = Math.round(nivel).toLocaleString("es-CL");
   for (const el of [principal, caja]) el.classList.toggle("regando", bombaFluye);
   mostrarEstado();
 }
@@ -624,7 +616,7 @@ function controlBomba() {
 
   // ---- solo animación: misma lógica que el .ino (no afecta al Arduino) ----
   if (bombaFluye) {
-    nivel = Math.min(CAPACIDAD, nivel + CAUDAL_ML_S * dtMs / 1000);
+    nivel += L_POR_SEGUNDO * dtMs / 1000;   // 15 s de chorro = 120 L (el vaso dibujado se topa en CAPACIDAD, el número no)
     sim.pendiente = Math.max(0, sim.pendiente - dtMs);
   }
   const activo = (serial.ok || MODO_SIN_ARDUINO) && cod !== "x";

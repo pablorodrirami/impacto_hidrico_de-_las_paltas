@@ -847,7 +847,13 @@
     display: block;
   }
 
-  /* ─── SLIDE 4: CONCLUSIÓN ─── */
+  /* ─── SLIDE 4: FISICALIZACIÓN (mismo diseño que la slide 3) ─── */
+  #slide-4.slide-fisicalizacion {
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  /* ─── (estilos antiguos de una slide de conclusión) ─── */
   #slide-4 {
     background: radial-gradient(ellipse at 50% 30%, rgba(77,194,215,0.15) 0%, transparent 60%),
                 var(--bg-dark);
@@ -1430,6 +1436,30 @@ window.addEventListener(&#x27;load&#x27;,function(){setTimeout(function(){
     </div>
   </section>
 
+  <!-- ─── SLIDE 4: FISICALIZACIÓN (CÁMARA + BOMBA DE AGUA) ─── -->
+  <!-- La página se carga recién al llegar a esta diapositiva, para no pedir la cámara antes. -->
+  <section class="slide slide-fisicalizacion" id="slide-4" data-slide="4">
+    <div class="slide-container-full">
+      <div class="header-compacto-row">
+        <div>
+          <span class="paso-tag">La fisicalización</span>
+          <h2 class="slide-titulo-compact" style="margin-bottom:0.15rem;">
+            El agua de <em>una sola palta</em>
+          </h2>
+          <p class="slide-texto-compact" style="margin-bottom:0;">
+            Pon una palta frente a la cámara y mira el agua que cuesta.
+          </p>
+        </div>
+      </div>
+
+      <div class="iframe-container-expandido">
+        <iframe id="fisicalizacion" title="Fisicalización: bomba de agua controlada por cámara"
+                data-src="fisicalizacion/bomba_web.html"
+                allow="camera; serial; fullscreen" allowfullscreen></iframe>
+      </div>
+    </div>
+  </section>
+
 </div><!-- /story -->
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -1708,6 +1738,11 @@ window.addEventListener(&#x27;load&#x27;,function(){setTimeout(function(){
       accion: 3
     },
     {
+      tag: "SIGUIENTE PREGUNTA · CLIC PARA DESCUBRIR:",
+      pregunta: "¿Y si vieras caer el agua de una sola palta?",
+      accion: 4
+    },
+    {
       tag: "RECORRIDO COMPLETADO · REINICIAR:",
       pregunta: "¿Volver a explorar la historia desde el inicio?",
       accion: 0
@@ -1715,7 +1750,7 @@ window.addEventListener(&#x27;load&#x27;,function(){setTimeout(function(){
   ];
 
   /* ── 3. Estado de slides y configuración de latencia ágil ── */
-  const TOTAL = 4;
+  const TOTAL = 5;
   let slideActual = 0;
   window.slideActual = 0;
   let isScrolling = false;
@@ -1754,6 +1789,11 @@ window.addEventListener(&#x27;load&#x27;,function(){setTimeout(function(){
       [60, 400, 900].forEach(ms => setTimeout(() => {
         try { document.getElementById('mapa3').contentWindow.dispatchEvent(new Event('resize')); } catch (e) {}
       }, ms));
+    }
+    if (n === 4) {
+      // Cargar la fisicalización solo al llegar (pide permiso de cámara recién aquí)
+      const f4 = document.getElementById('fisicalizacion');
+      if (f4 && !f4.getAttribute('src') && f4.dataset.src) f4.src = f4.dataset.src;
     }
   };
 
@@ -1915,6 +1955,7 @@ window.addEventListener(&#x27;load&#x27;,function(){setTimeout(function(){
   }
 
   conectarIframeWheel('mapa3');
+  conectarIframeWheel('fisicalizacion');
 
   /* ── 7. Control de Teclado (Flechas, Espacio, PageDown) ── */
   window.addEventListener('keydown', function(e) {
